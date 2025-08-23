@@ -54,7 +54,7 @@ export default function Home() {
                         </TabsTrigger>
                      </TabsList>
                   </div>
-                  
+
                   <TabsContent value="overview" className="flex justify-center">
                      <ContributionGraph />
                   </TabsContent>
@@ -93,7 +93,6 @@ export default function Home() {
                         </CardFooter>
                      </Card>
                   </TabsContent>
-
                </Tabs>
             </div>
          </div>

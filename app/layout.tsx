@@ -48,7 +48,7 @@ export default function RootLayout({
                   {children}
                   {/* <MagicUIDock /> */}
                   <MusicPlayer />
-                  <QuickAction/>
+                  <QuickAction />
                   <GradientBackground />
                </ContributionGraphProvider>
             </ThemeProvider>

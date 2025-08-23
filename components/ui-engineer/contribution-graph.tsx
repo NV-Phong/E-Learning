@@ -54,7 +54,7 @@ export default function ContributionGraph() {
 
       // Create patterns for more realistic data - pre-calculate
       const activeWeeks = new Set(
-         Array.from({ length: 30 }, () => Math.floor(Math.random() * 52))
+         Array.from({ length: 30 }, () => Math.floor(Math.random() * 52)),
       );
 
       let totalContributions = 0;
@@ -74,7 +74,7 @@ export default function ContributionGraph() {
       while (currentDate <= endDate) {
          const weekOfYear = Math.floor(
             (currentDate.getTime() - startDate.getTime()) /
-               (7 * 24 * 60 * 60 * 1000)
+               (7 * 24 * 60 * 60 * 1000),
          );
          const isWeekend =
             currentDate.getDay() === 0 || currentDate.getDay() === 6;
@@ -82,7 +82,7 @@ export default function ContributionGraph() {
          const dateString = currentDate.toISOString().split("T")[0];
          const formattedDate = currentDate.toLocaleDateString(
             "en-US",
-            dateFormatOptions
+            dateFormatOptions,
          );
 
          let level: ContributionLevel = 0;
@@ -201,7 +201,7 @@ export default function ContributionGraph() {
          const firstDayOfMonth = new Date(year, i, 1);
          const weekIndex = Math.floor(
             (firstDayOfMonth.getTime() - new Date(year, 0, 1).getTime()) /
-               (7 * 24 * 60 * 60 * 1000)
+               (7 * 24 * 60 * 60 * 1000),
          );
 
          labels.push({
@@ -242,9 +242,16 @@ export default function ContributionGraph() {
       <div className="w-full max-w-4xl mx-auto">
          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             <div className="flex items-center gap-2">
-               <Icon color="var(--primary)" size={24} styles="solid" name="calendar-03-solid-rounded" />
+               <Icon
+                  color="var(--primary)"
+                  size={24}
+                  styles="solid"
+                  name="calendar-03-solid-rounded"
+               />
                <h3 className="text-lg font-medium">Contribution Graph</h3>
-               <Badge className="text-primary bg-primary/10 h-6 border border-primary/20">Comming Soon</Badge>
+               <Badge className="text-primary bg-primary/10 h-6 border border-primary/20">
+                  Comming Soon
+               </Badge>
             </div>
             <div className="flex items-center gap-2">
                <Button
@@ -375,7 +382,7 @@ export default function ContributionGraph() {
                                              const day = week.find(
                                                 (d) =>
                                                    new Date(d.date).getDay() ===
-                                                   dayIndex
+                                                   dayIndex,
                                              );
 
                                              if (!day) {
@@ -408,12 +415,12 @@ export default function ContributionGraph() {
                                                             className={cn(
                                                                "w-[12px] h-[12px] rounded-sm cursor-pointer transition-colors",
                                                                getLevelColor(
-                                                                  day.level
+                                                                  day.level,
                                                                ),
                                                                day.date ===
                                                                   stats.bestDay
                                                                      .date &&
-                                                                  "ring-1 ring-offset-1 ring-primary-foreground-darker"
+                                                                  "ring-1 ring-offset-1 ring-primary-foreground-darker",
                                                             )}
                                                          />
                                                       </TooltipTrigger>
@@ -436,21 +443,24 @@ export default function ContributionGraph() {
                                                                     }`}
                                                             </div>
                                                             <div className="text-neutral-300">
-                                                               {day.formattedDate}
+                                                               {
+                                                                  day.formattedDate
+                                                               }
                                                             </div>
                                                          </div>
                                                          {day.date ===
-                                                            stats.bestDay.date && (
+                                                            stats.bestDay
+                                                               .date && (
                                                             <div className="bg-primary text-white px-3 py-1 text-[10px] font-medium">
-                                                               🏆 Most active day
-                                                               of the year
+                                                               🏆 Most active
+                                                               day of the year
                                                             </div>
                                                          )}
                                                       </TooltipContent>
                                                    </Tooltip>
                                                 </TooltipProvider>
                                              );
-                                          }
+                                          },
                                        )}
                                     </div>
                                  ))}
@@ -467,7 +477,9 @@ export default function ContributionGraph() {
                                     key={level}
                                     className={cn(
                                        "w-[12px] h-[12px] rounded-sm",
-                                       getLevelColor(level as ContributionLevel)
+                                       getLevelColor(
+                                          level as ContributionLevel,
+                                       ),
                                     )}
                                  />
                               ))}

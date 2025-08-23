@@ -32,7 +32,7 @@ export function APIShowLogs() {
                      bottom: 0,
                   }}
                />,
-               document.body
+               document.body,
             )}
          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

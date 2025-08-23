@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 export default function DatePicker() {
    const [open, setOpen] = React.useState(false);
    const [date, setDate] = React.useState<Date | undefined>(
-      new Date(2003, 2, 3)
+      new Date(2003, 2, 3),
    );
 
    const formatDate = (date: Date) => {
@@ -39,7 +39,7 @@ export default function DatePicker() {
                      bottom: 0,
                   }}
                />,
-               document.body
+               document.body,
             )}
          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>

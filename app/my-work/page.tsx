@@ -79,8 +79,9 @@ const checkpointNotes: CheckpointNote[] = [
             text: (
                <div className="h-full flex flex-col gap-2">
                   <p className="overflow-y-auto text-foreground">
-                     This GitHub Contribution Graph Editor, built with NextJS, provides
-                     an intuitive interface with auto-commit functionality to make fake commit.
+                     This GitHub Contribution Graph Editor, built with NextJS,
+                     provides an intuitive interface with auto-commit
+                     functionality to make fake commit.
                   </p>
                   <CGEditorPreview />
                </div>
@@ -613,7 +614,7 @@ export default function MyWork() {
                                  rotation={getNoteRotation(index, stackIndex)}
                                  zIndex={getNoteZIndex(
                                     stackedNote.id,
-                                    30 + index * 3 - (stackIndex + 1)
+                                    30 + index * 3 - (stackIndex + 1),
                                  )}
                                  onDragStart={() =>
                                     handleNoteDragStart(stackedNote.id)

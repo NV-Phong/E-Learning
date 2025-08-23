@@ -43,7 +43,7 @@ export function DatePicker({
             ? `${formatDate(selection.from)} - ${formatDate(selection.to)}`
             : formatDate(selection.from);
       },
-      []
+      [],
    );
 
    const calculateTotalDays = React.useCallback(
@@ -58,14 +58,14 @@ export function DatePicker({
                   ? total + 1
                   : total +
                        Math.abs(
-                          differenceInDays(selection.to, selection.from)
+                          differenceInDays(selection.to, selection.from),
                        ) +
                        1;
             }
             return total;
          }, 0);
       },
-      []
+      [],
    );
 
    const handleAddToStack = React.useCallback(() => {
@@ -84,12 +84,12 @@ export function DatePicker({
       (index: number) => {
          setDateSelections(dateSelections.filter((_, i) => i !== index));
       },
-      [dateSelections, setDateSelections]
+      [dateSelections, setDateSelections],
    );
 
    const totalDays = React.useMemo(
       () => calculateTotalDays(dateSelections),
-      [dateSelections, calculateTotalDays]
+      [dateSelections, calculateTotalDays],
    );
 
    React.useEffect(() => {
@@ -123,7 +123,7 @@ export function DatePicker({
             numberOfMonths={2}
          />
       ),
-      [date]
+      [date],
    );
 
    return (
@@ -141,7 +141,7 @@ export function DatePicker({
                      bottom: 0,
                   }}
                />,
-               document.body
+               document.body,
             )}
          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -150,7 +150,7 @@ export function DatePicker({
                   variant="outline"
                   className={cn(
                      "justify-start text-left p-2 font-normal bg-card border-primary/30",
-                     !date && !dateSelections.length && "text-muted-foreground"
+                     !date && !dateSelections.length && "text-muted-foreground",
                   )}
                >
                   <Icon styles="two-tone" name="calendar-02-twotone-rounded" />

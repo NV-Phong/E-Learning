@@ -20,7 +20,7 @@ export const register = async (
    username: string,
    password: string,
    email: string,
-   displayname: string
+   displayname: string,
 ) => {
    const data = { username, password, email, displayname };
    return API.post("/auth/register", data);
@@ -48,7 +48,7 @@ const refreshAccessToken = async (refreshToken: string): Promise<string> => {
          headers: {
             Authorization: `Bearer ${refreshToken}`,
          },
-      }
+      },
    );
 
    return response.data.access_token;
@@ -63,7 +63,7 @@ API.interceptors.request.use(
       }
       return config;
    },
-   (error) => Promise.reject(error)
+   (error) => Promise.reject(error),
 );
 
 API.interceptors.response.use(
@@ -82,9 +82,8 @@ API.interceptors.response.use(
                   expires: 30,
                   path: "/",
                });
-               originalRequest.headers[
-                  "Authorization"
-               ] = `Bearer ${newAccessToken}`;
+               originalRequest.headers["Authorization"] =
+                  `Bearer ${newAccessToken}`;
                return API(originalRequest);
             } catch (refreshError) {
                Cookies.remove("access_token", { path: "/" });
@@ -98,7 +97,7 @@ API.interceptors.response.use(
       }
 
       return Promise.reject(error);
-   }
+   },
 );
 
 export default API;

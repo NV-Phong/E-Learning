@@ -173,7 +173,7 @@ const StickyNotes = () => {
    const calculatePosition = (
       edge: EdgePosition,
       offsetX: number,
-      offsetY: number
+      offsetY: number,
    ) => {
       const { width, height } = screenDimensions;
 
@@ -311,8 +311,8 @@ const StickyNotes = () => {
                     offsetX: newOffsetX,
                     offsetY: newOffsetY,
                  }
-               : note
-         )
+               : note,
+         ),
       );
    };
 
@@ -384,7 +384,7 @@ const StickyNotes = () => {
             const position = calculatePosition(
                note.edge,
                note.offsetX,
-               note.offsetY
+               note.offsetY,
             );
 
             return (

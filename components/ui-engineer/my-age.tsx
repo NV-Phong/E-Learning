@@ -15,7 +15,7 @@ export default function MyAge() {
 
    const decrement = () => {
       setCommitsPerDay(
-         commitsPerDay === null ? 21 : Math.max(0, commitsPerDay - 1)
+         commitsPerDay === null ? 21 : Math.max(0, commitsPerDay - 1),
       );
    };
 

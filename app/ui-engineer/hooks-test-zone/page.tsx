@@ -149,7 +149,7 @@ export default function APITestZone() {
                                        size="icon"
                                        onClick={() =>
                                           handleCopy(
-                                             JSON.stringify(data, null, 2)
+                                             JSON.stringify(data, null, 2),
                                           )
                                        }
                                        className="hover:text-primary-foreground-1"

@@ -6,7 +6,7 @@ export default function TailwindCard() {
       <div className="relative grid min-h-screen grid-cols-[1fr_2.5rem_auto_2.5rem_1fr] grid-rows-[1fr_1px_auto_1px_1fr] [--pattern-fg:var(--color-gray-950)]/5 dark:[--pattern-fg:var(--color-white)]/10">
          <div className="col-start-3 row-start-3 flex max-w-lg flex-col bg-primary/20 p-2 dark:bg-white/10">
             <div className="rounded-xl bg-card p-10 text-sm/7 text-gray-700 dark:bg-card dark:text-gray-300">
-               <TailwindLogo/>
+               <TailwindLogo />
                <div className="space-y-6">
                   <p>
                      An advanced online playground for Tailwind CSS, including

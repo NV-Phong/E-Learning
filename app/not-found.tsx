@@ -72,8 +72,8 @@ export default function NotFound() {
                            <p className="text-2xl">NOT FOUND</p>
                         </CardTitle>
                         <CardDescription className="text-foreground">
-                           You&apos;re lost but hey, at least you found this cute
-                           message 👉🏻👈🏻
+                           You&apos;re lost but hey, at least you found this
+                           cute message 👉🏻👈🏻
                            {/* You're not lost - the page is! 🧩 */}
                         </CardDescription>
                      </CardHeader>

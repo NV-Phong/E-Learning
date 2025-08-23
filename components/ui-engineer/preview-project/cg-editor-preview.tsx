@@ -44,7 +44,7 @@ export function CGEditorPreview() {
                      bottom: 0,
                   }}
                />,
-               document.body
+               document.body,
             )}
          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

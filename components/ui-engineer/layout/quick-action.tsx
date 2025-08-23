@@ -161,7 +161,7 @@ export default function QuickAction() {
                   className="fixed inset-0 backdrop-blur-[10px] z-[999]"
                   onClick={closeMenu}
                />,
-               document.body
+               document.body,
             )}
          <div
             className="fixed left-8 top-1/2 -translate-y-1/2 flex items-center z-[1000]"

@@ -17,20 +17,28 @@ const ContributionGraphContext = React.createContext<
    ContributionGraphContextType | undefined
 >(undefined);
 
-export function ContributionGraphProvider({ children }: { children: React.ReactNode }) {
+export function ContributionGraphProvider({
+   children,
+}: {
+   children: React.ReactNode;
+}) {
    const [totalDays, setTotalDays] = React.useState(0);
-   const [commitsPerDay, setCommitsPerDay] = React.useState<number | null>(null);
-   const [dateSelections, setDateSelections] = React.useState<DateSelection[]>([]);
+   const [commitsPerDay, setCommitsPerDay] = React.useState<number | null>(
+      null,
+   );
+   const [dateSelections, setDateSelections] = React.useState<DateSelection[]>(
+      [],
+   );
 
    return (
       <ContributionGraphContext.Provider
-         value={{ 
-            totalDays, 
-            setTotalDays, 
-            commitsPerDay, 
+         value={{
+            totalDays,
+            setTotalDays,
+            commitsPerDay,
             setCommitsPerDay,
             dateSelections,
-            setDateSelections
+            setDateSelections,
          }}
       >
          {children}
@@ -42,7 +50,7 @@ export function useContributionGraphContext() {
    const context = React.useContext(ContributionGraphContext);
    if (!context) {
       throw new Error(
-         "useContributionGraphContext must be used within a DateProvider"
+         "useContributionGraphContext must be used within a DateProvider",
       );
    }
    return context;

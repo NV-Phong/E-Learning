@@ -33,7 +33,7 @@ export async function PUT(req: Request, context: RouteContext) {
    } catch {
       return NextResponse.json(
          { error: "Failed to update user" },
-         { status: 500 }
+         { status: 500 },
       );
    }
 }
@@ -51,7 +51,7 @@ export async function DELETE(req: Request, context: RouteContext) {
    } catch {
       return NextResponse.json(
          { error: "Failed to delete user" },
-         { status: 500 }
+         { status: 500 },
       );
    }
 }

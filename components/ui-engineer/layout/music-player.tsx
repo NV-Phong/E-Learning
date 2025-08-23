@@ -62,7 +62,7 @@ export function MusicPlayer() {
       } else {
          setCurrentTrack(
             (prevTrack) =>
-               (prevTrack + (forward ? 1 : -1) + tracks.length) % tracks.length
+               (prevTrack + (forward ? 1 : -1) + tracks.length) % tracks.length,
          );
       }
       setProgress(0);
@@ -136,7 +136,7 @@ export function MusicPlayer() {
             </Button>
          </div>
       ),
-      [currentTrack, isPlaying, toggleCollapse, tracks]
+      [currentTrack, isPlaying, toggleCollapse, tracks],
    );
 
    return (

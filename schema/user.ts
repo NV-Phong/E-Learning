@@ -14,7 +14,7 @@ const UserSchema = new Schema(
          match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
       },
    },
-   { timestamps: true }
+   { timestamps: true },
 );
 
 export const User = models.User || mongoose.model("User", UserSchema);

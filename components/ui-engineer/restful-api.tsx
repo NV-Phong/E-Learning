@@ -58,7 +58,7 @@ export function RESTfulAPI() {
                      bottom: 0,
                   }}
                />,
-               document.body
+               document.body,
             )}
          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -90,7 +90,7 @@ export function RESTfulAPI() {
                               value={framework.value}
                               onSelect={(currentValue) => {
                                  setValue(
-                                    currentValue === value ? "" : currentValue
+                                    currentValue === value ? "" : currentValue,
                                  );
                                  setOpen(false);
                               }}
@@ -101,7 +101,7 @@ export function RESTfulAPI() {
                                     "ml-auto",
                                     value === framework.value
                                        ? "opacity-100"
-                                       : "opacity-0"
+                                       : "opacity-0",
                                  )}
                               />
                            </CommandItem>

@@ -50,7 +50,7 @@ export function ContactMe() {
                      bottom: 0,
                   }}
                />,
-               document.body
+               document.body,
             )}
          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -76,7 +76,7 @@ export function ContactMe() {
                            onClick={() =>
                               window.open(
                                  "https://www.facebook.com/nv.phong.03032003",
-                                 "_blank"
+                                 "_blank",
                               )
                            }
                            className="bg-transparent w-5/11 border-primary/20 hover:text-primary-foreground-1 group"
@@ -93,7 +93,7 @@ export function ContactMe() {
                            onClick={() =>
                               window.open(
                                  "https://www.pinterest.com/nvphonggg",
-                                 "_blank"
+                                 "_blank",
                               )
                            }
                            className="bg-transparent w-5/11 border-primary/20 hover:text-primary-foreground-1 group"
@@ -117,7 +117,7 @@ export function ContactMe() {
                            onClick={() =>
                               window.open(
                                  "https://github.com/NV-Phong",
-                                 "_blank"
+                                 "_blank",
                               )
                            }
                            className="bg-transparent w-full border-primary/20 hover:text-primary-foreground-1 group"

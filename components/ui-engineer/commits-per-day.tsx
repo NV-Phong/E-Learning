@@ -15,7 +15,7 @@ export default function CommitsPerDay() {
 
    const decrement = () => {
       setCommitsPerDay(
-         commitsPerDay === null ? 0 : Math.max(0, commitsPerDay - 1)
+         commitsPerDay === null ? 0 : Math.max(0, commitsPerDay - 1),
       );
    };
 
