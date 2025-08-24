@@ -64,7 +64,7 @@ export function Header() {
                </Button>
                <Button variant="ghost" asChild>
                   <Link
-                     href="/packages"
+                     href="/course"
                      className="text-foreground hover:text-primary"
                   >
                      Gói học
