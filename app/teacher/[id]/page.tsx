@@ -1,0 +1,265 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Star, Award, Globe } from "lucide-react";
+import { teachers, reviews } from "@/lib/data";
+
+interface TeacherDetailPageProps {
+   params: {
+      id: string;
+   };
+}
+
+export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
+   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+      new Date()
+   );
+   const teacher = teachers.find((t) => t.id === params.id);
+
+   if (!teacher) {
+      return (
+         <div className="min-h-screen bg-background py-8">
+            <div className="container mx-auto px-4 text-center">
+               <h1 className="text-2xl font-bold text-foreground mb-4">
+                  Không tìm thấy giáo viên
+               </h1>
+               <Button asChild>
+                  <Link href="/teachers">Quay lại danh sách</Link>
+               </Button>
+            </div>
+         </div>
+      );
+   }
+
+   return (
+      <div className="min-h-screen bg-background py-8">
+         <div className="container mx-auto px-4">
+            <Button
+               variant="ghost"
+               asChild
+               className="mb-6 text-foreground hover:text-primary"
+            >
+               <Link href="/teachers">← Quay lại danh sách</Link>
+            </Button>
+
+            <div className="grid lg:grid-cols-3 gap-8">
+               <div className="lg:col-span-2">
+                  <Card className="bg-card border-border mb-6">
+                     <CardContent className="p-6">
+                        <div className="flex items-start space-x-6 mb-6">
+                           <Avatar className="w-24 h-24">
+                              <AvatarImage
+                                 src={teacher.avatar || "/placeholder.svg"}
+                                 alt={teacher.name}
+                              />
+                              <AvatarFallback>
+                                 {teacher.name
+                                    .split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("")}
+                              </AvatarFallback>
+                           </Avatar>
+                           <div className="flex-1">
+                              <h1 className="text-2xl font-bold text-foreground mb-2">
+                                 {teacher.name}
+                              </h1>
+                              <p className="text-muted-foreground mb-3">
+                                 {teacher.experience}
+                              </p>
+                              <div className="flex items-center space-x-4 mb-3">
+                                 <div className="flex items-center space-x-1">
+                                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                                    <span className="font-medium text-foreground">
+                                       {teacher.rating}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                       ({teacher.reviewCount} đánh giá)
+                                    </span>
+                                 </div>
+                                 <div className="text-xl font-bold text-primary">
+                                    {teacher.hourlyRate.toLocaleString("vi-VN")}
+                                    đ/giờ
+                                 </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                 {teacher.specialties.map(
+                                    (specialty: string) => (
+                                       <Badge
+                                          key={specialty}
+                                          variant="secondary"
+                                          className="bg-primary/10 text-primary"
+                                       >
+                                          {specialty}
+                                       </Badge>
+                                    )
+                                 )}
+                              </div>
+                           </div>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="space-y-6">
+                           <div>
+                              <h3 className="font-semibold text-foreground mb-2">
+                                 Giới thiệu
+                              </h3>
+                              <p className="text-muted-foreground">
+                                 {teacher.description}
+                              </p>
+                           </div>
+
+                           <div>
+                              <h3 className="font-semibold text-foreground mb-2">
+                                 Chứng chỉ
+                              </h3>
+                              <div className="flex flex-wrap gap-2">
+                                 {teacher.certificates.map((cert: string) => (
+                                    <Badge
+                                       key={cert}
+                                       variant="outline"
+                                       className="border-border text-foreground"
+                                    >
+                                       <Award className="w-3 h-3 mr-1" />
+                                       {cert}
+                                    </Badge>
+                                 ))}
+                              </div>
+                           </div>
+
+                           <div>
+                              <h3 className="font-semibold text-foreground mb-2">
+                                 Ngôn ngữ
+                              </h3>
+                              <div className="flex flex-wrap gap-2">
+                                 {teacher.languages.map((lang: string) => (
+                                    <Badge
+                                       key={lang}
+                                       variant="outline"
+                                       className="border-border text-foreground"
+                                    >
+                                       <Globe className="w-3 h-3 mr-1" />
+                                       {lang}
+                                    </Badge>
+                                 ))}
+                              </div>
+                           </div>
+                        </div>
+                     </CardContent>
+                  </Card>
+
+                  {/* Reviews Section */}
+                  <Card className="bg-card border-border">
+                     <CardHeader>
+                        <CardTitle className="text-foreground">
+                           Đánh giá từ học viên
+                        </CardTitle>
+                     </CardHeader>
+                     <CardContent>
+                        <div className="space-y-4">
+                           {reviews.map((review) => (
+                              <div
+                                 key={review.id}
+                                 className="border-b border-border pb-4 last:border-b-0"
+                              >
+                                 <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center space-x-2">
+                                       <Avatar className="w-8 h-8">
+                                          <AvatarFallback>
+                                             {review.studentName[0]}
+                                          </AvatarFallback>
+                                       </Avatar>
+                                       <span className="font-medium text-foreground">
+                                          {review.studentName}
+                                       </span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                       {[...Array(5)].map((_, i) => (
+                                          <Star
+                                             key={i}
+                                             className={`w-4 h-4 ${
+                                                i < review.rating
+                                                   ? "fill-yellow-400 text-yellow-400"
+                                                   : "text-gray-300"
+                                             }`}
+                                          />
+                                       ))}
+                                    </div>
+                                 </div>
+                                 <p className="text-muted-foreground">
+                                    {review.comment}
+                                 </p>
+                                 <p className="text-sm text-muted-foreground mt-1">
+                                    {review.date}
+                                 </p>
+                              </div>
+                           ))}
+                        </div>
+                     </CardContent>
+                  </Card>
+               </div>
+
+               <div>
+                  <Card className="bg-card border-border sticky top-24">
+                     <CardHeader>
+                        <CardTitle className="text-foreground">
+                           Đặt lịch học
+                        </CardTitle>
+                     </CardHeader>
+                     <CardContent>
+                        <div className="space-y-4">
+                           <div>
+                              <Label className="text-foreground">
+                                 Chọn ngày
+                              </Label>
+                              <Calendar
+                                 mode="single"
+                                 selected={selectedDate}
+                                 onSelect={setSelectedDate}
+                                 className="rounded-md border border-border"
+                              />
+                           </div>
+
+                           <div>
+                              <Label className="text-foreground">
+                                 Khung giờ có sẵn
+                              </Label>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                 {teacher.availability.map((time: string) => (
+                                    <Button
+                                       key={time}
+                                       variant="outline"
+                                       size="sm"
+                                       className="border-border text-foreground hover:bg-accent bg-transparent"
+                                    >
+                                       {time}
+                                    </Button>
+                                 ))}
+                              </div>
+                           </div>
+
+                           <Button
+                              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                              asChild
+                           >
+                              <Link href={`/booking?teacher=${teacher.id}`}>
+                                 Đặt lịch học thử
+                              </Link>
+                           </Button>
+                        </div>
+                     </CardContent>
+                  </Card>
+               </div>
+            </div>
+         </div>
+      </div>
+   );
+}

@@ -12,6 +12,7 @@ import {
    DropdownMenuSeparator,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 
 export function Header() {
    const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,7 +49,7 @@ export function Header() {
             <nav className="hidden md:flex items-center space-x-6">
                <Button variant="ghost" asChild>
                   <Link
-                     href="/teachers"
+                     href="/teacher"
                      className="text-foreground hover:text-primary"
                   >
                      Tìm giáo viên
@@ -98,6 +99,7 @@ export function Header() {
                   </DropdownMenu>
                ) : (
                   <>
+                     <ModeToggle />
                      <Button
                         variant="outline"
                         asChild

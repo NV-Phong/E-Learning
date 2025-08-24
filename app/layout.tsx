@@ -9,7 +9,6 @@ import { Tomorrow } from "next/font/google";
 import { ContributionGraphProvider } from "@/context/cg-context";
 import { Header } from "@/components/ui-engineer/layout/header";
 import { Footer } from "@/components/ui-engineer/layout/footer";
-import { MusicPlayer } from "@/components/ui-engineer/layout/music-player";
 
 const tomorrow = Tomorrow({
    subsets: ["latin"],
@@ -48,7 +47,6 @@ export default function RootLayout({
                   <Header />
                   {children}
                   <Footer />
-                  <MusicPlayer></MusicPlayer>
                   <GradientBackground />
                </ContributionGraphProvider>
             </ThemeProvider>
