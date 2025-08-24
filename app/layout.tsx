@@ -4,12 +4,9 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import GradientBackground from "@/components/ui-engineer/layout/gradient-background";
-// import { MagicUIDock } from "@/components/layout/magicui-dock";
 import { Spotlight } from "@/components/aceternity/spotlight-new";
 import { Tomorrow } from "next/font/google";
 import { ContributionGraphProvider } from "@/context/cg-context";
-import { MusicPlayer } from "@/components/ui-engineer/layout/music-player";
-import QuickAction from "@/components/ui-engineer/layout/quick-action";
 
 const tomorrow = Tomorrow({
    subsets: ["latin"],
@@ -38,7 +35,7 @@ export default function RootLayout({
          <body>
             <ThemeProvider
                attribute="class"
-               defaultTheme="pastel-pink"
+               defaultTheme="light"
                enableSystem
                disableTransitionOnChange
                themes={["light", "dark", "pastel-pink"]}
@@ -46,9 +43,6 @@ export default function RootLayout({
                <ContributionGraphProvider>
                   <Spotlight />
                   {children}
-                  {/* <MagicUIDock /> */}
-                  <MusicPlayer />
-                  <QuickAction />
                   <GradientBackground />
                </ContributionGraphProvider>
             </ThemeProvider>
