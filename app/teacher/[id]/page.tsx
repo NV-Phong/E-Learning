@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,26 +13,27 @@ import { Star, Award, Globe } from "lucide-react";
 import { teachers, reviews } from "@/lib/data";
 
 interface TeacherDetailPageProps {
-   params: {
+   params: Promise<{
       id: string;
-   };
+   }>;
 }
 
 export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
       new Date()
    );
-   const teacher = teachers.find((t) => t.id === params.id);
+   const { id } = use(params);
+   const teacher = teachers.find((t) => t.id === id);
 
    if (!teacher) {
       return (
-         <div className="min-h-screen bg-background py-8">
-            <div className="container mx-auto px-4 text-center">
+         <div className="min-h-screen py-8">
+            <div className="container mx-auto px-4 text-center mt-15">
                <h1 className="text-2xl font-bold text-foreground mb-4">
                   Không tìm thấy giáo viên
                </h1>
                <Button asChild>
-                  <Link href="/teachers">Quay lại danh sách</Link>
+                  <Link href="/teacher">Quay lại danh sách</Link>
                </Button>
             </div>
          </div>
@@ -40,14 +41,14 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
    }
 
    return (
-      <div className="min-h-screen bg-background py-8">
-         <div className="container mx-auto px-4">
+      <div className="min-h-screen py-8">
+         <div className="container mx-auto px-4 mt-15">
             <Button
                variant="ghost"
                asChild
                className="mb-6 text-foreground hover:text-primary"
             >
-               <Link href="/teachers">← Quay lại danh sách</Link>
+               <Link href="/teacher">← Quay lại danh sách</Link>
             </Button>
 
             <div className="grid lg:grid-cols-3 gap-8">
@@ -59,11 +60,12 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                               <AvatarImage
                                  src={teacher.avatar || "/placeholder.svg"}
                                  alt={teacher.name}
+                                 className="object-cover"
                               />
                               <AvatarFallback>
                                  {teacher.name
                                     .split(" ")
-                                    .map((n: string) => n[0])
+                                    .map((n) => n[0])
                                     .join("")}
                               </AvatarFallback>
                            </Avatar>
@@ -90,17 +92,15 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  </div>
                               </div>
                               <div className="flex flex-wrap gap-2">
-                                 {teacher.specialties.map(
-                                    (specialty: string) => (
-                                       <Badge
-                                          key={specialty}
-                                          variant="secondary"
-                                          className="bg-primary/10 text-primary"
-                                       >
-                                          {specialty}
-                                       </Badge>
-                                    )
-                                 )}
+                                 {teacher.specialties.map((specialty) => (
+                                    <Badge
+                                       key={specialty}
+                                       variant="secondary"
+                                       className="bg-primary/10 text-primary"
+                                    >
+                                       {specialty}
+                                    </Badge>
+                                 ))}
                               </div>
                            </div>
                         </div>
@@ -122,7 +122,7 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  Chứng chỉ
                               </h3>
                               <div className="flex flex-wrap gap-2">
-                                 {teacher.certificates.map((cert: string) => (
+                                 {teacher.certificates.map((cert) => (
                                     <Badge
                                        key={cert}
                                        variant="outline"
@@ -140,7 +140,7 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  Ngôn ngữ
                               </h3>
                               <div className="flex flex-wrap gap-2">
-                                 {teacher.languages.map((lang: string) => (
+                                 {teacher.languages.map((lang) => (
                                     <Badge
                                        key={lang}
                                        variant="outline"
@@ -233,7 +233,7 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  Khung giờ có sẵn
                               </Label>
                               <div className="grid grid-cols-2 gap-2 mt-2">
-                                 {teacher.availability.map((time: string) => (
+                                 {teacher.availability.map((time) => (
                                     <Button
                                        key={time}
                                        variant="outline"
