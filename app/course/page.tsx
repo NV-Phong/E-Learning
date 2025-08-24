@@ -24,7 +24,7 @@ export default function PackagesPage() {
                {learningPackages.map((pkg) => (
                   <Card
                      key={pkg.id}
-                     className={`bg-card border-border relative ${
+                     className={`bg-card border-border relative flex flex-col h-full ${
                         pkg.popular ? "ring-2 ring-primary" : ""
                      }`}
                   >
@@ -55,26 +55,28 @@ export default function PackagesPage() {
                         </div>
                      </CardHeader>
 
-                     <CardContent>
-                        <ul className="space-y-3 mb-6">
-                           {pkg.features.map((feature: string, index: number) => (
-                              <li
-                                 key={index}
-                                 className="flex items-center space-x-2"
-                              >
-                                 <CheckCircle className="w-4 h-4 text-primary" />
-                                 <span className="text-muted-foreground">
-                                    {feature}
-                                 </span>
-                              </li>
-                           ))}
+                     <CardContent className="flex-1 flex flex-col">
+                        <ul className="space-y-3 flex-1">
+                           {pkg.features.map(
+                              (feature: string, index: number) => (
+                                 <li
+                                    key={index}
+                                    className="flex items-center space-x-2"
+                                 >
+                                    <CheckCircle className="w-4 h-4 text-primary" />
+                                    <span className="text-muted-foreground">
+                                       {feature}
+                                    </span>
+                                 </li>
+                              )
+                           )}
                         </ul>
 
                         <Button
-                           className={`w-full ${
+                           className={`w-full mt-6 ${
                               pkg.popular
                                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                 : "bg-background border border-border text-foreground hover:bg-accent"
+                                 : "bg-transparent text-foreground hover:bg-accent"
                            }`}
                            variant={pkg.popular ? "default" : "outline"}
                            asChild
