@@ -28,7 +28,7 @@ export default function BookingPage() {
    );
    const [selectedTime, setSelectedTime] = useState<string>("");
    const [selectedLevel, setSelectedLevel] = useState<string>("");
-   const [selectedTeacher] = useState(
+   const [selectedTeacher, setSelectedTeacher] = useState(
       teacherId ? teachers.find((t) => t.id === teacherId) : null
    );
 
@@ -111,7 +111,19 @@ export default function BookingPage() {
       }
 
       if (bookingType === "regular") {
-         window.location.href = "/payment";
+         const params = new URLSearchParams({
+            type: "booking",
+            ...(selectedTeacher && { teacher: selectedTeacher.id }),
+            ...(selectedDate && { date: selectedDate.toISOString() }),
+            ...(selectedTime && { time: selectedTime }),
+            level: selectedLevel,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            ...(formData.goals && { goals: formData.goals }),
+         });
+
+         router.push(`/payment?${params.toString()}`);
       } else {
          // Create URL parameters for success page
          const params = new URLSearchParams({
@@ -138,23 +150,23 @@ export default function BookingPage() {
                </h1>
                <div className="flex justify-center space-x-4">
                   <Button
-                     variant={bookingType === "trial" ? "default" : "outline"}
+                     variant={bookingType === "trial" ? "default" : "ghost"}
                      onClick={() => setBookingType("trial")}
                      className={
                         bookingType === "trial"
                            ? "bg-primary text-primary-foreground"
-                           : "border-border text-foreground"
+                           : "border"
                      }
                   >
                      Học thử miễn phí
                   </Button>
                   <Button
-                     variant={bookingType === "regular" ? "default" : "outline"}
+                     variant={bookingType === "regular" ? "default" : "ghost"}
                      onClick={() => setBookingType("regular")}
                      className={
                         bookingType === "regular"
                            ? "bg-primary text-primary-foreground"
-                           : "border-border text-foreground"
+                           : "border"
                      }
                   >
                      Đặt lịch học
