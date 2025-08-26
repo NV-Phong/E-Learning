@@ -30,18 +30,17 @@ export function useLogin() {
 }
 
 export function useRegister() {
-   const router = useRouter();
    const [loading, setLoading] = useState(false);
 
    const handleRegister = async (
       username: string,
       password: string,
       email: string,
-      displayname: string
+      displayName: string
    ) => {
       setLoading(true);
       try {
-         await register(username, password, email, displayname);
+         await register(username, password, email, displayName);
          toast.success("Đăng ký thành công 🎉, vui lòng đăng nhập");
          window.location.reload();
       } catch (err: any) {

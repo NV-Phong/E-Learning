@@ -20,9 +20,9 @@ export const register = async (
    username: string,
    password: string,
    email: string,
-   displayname: string,
+   displayName: string,
 ) => {
-   const data = { username, password, email, displayname };
+   const data = { username, password, email, displayName };
    return API.post("/auth/register", data);
 };
 
