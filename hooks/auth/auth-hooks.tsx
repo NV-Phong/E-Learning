@@ -1,43 +1,37 @@
-"use client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Cookies from "js-cookie";
+import { useAuthContext } from "@/context/auth-context";
 import { login, register } from "@/services/api";
 
-// ================== LOGIN HOOK ==================
 export function useLogin() {
+   const router = useRouter();
+   const { login: setAuth } = useAuthContext();
    const [loading, setLoading] = useState(false);
-   const [error, setError] = useState<string | null>(null);
 
    const handleLogin = async (username: string, password: string) => {
       setLoading(true);
-      setError(null);
       try {
          const res = await login(username, password);
          const { access_token, refresh_token } = res.data;
 
-         Cookies.set("access_token", access_token, { expires: 30, path: "/" });
-         Cookies.set("refresh_token", refresh_token, {
-            expires: 30,
-            path: "/",
-         });
-
-         window.location.href = "/dashboard";
-         return res.data;
+         setAuth(access_token, refresh_token);
+         toast.success("Đăng nhập thành công 🎉");
+         router.push("/dashboard");
       } catch (err: any) {
-         setError(err.response?.data?.message || "Login failed");
+         toast.error(err.response?.data?.message || "Login failed");
          throw err;
       } finally {
          setLoading(false);
       }
    };
 
-   return { handleLogin, loading, error };
+   return { handleLogin, loading };
 }
 
-// ================== REGISTER HOOK ==================
 export function useRegister() {
+   const router = useRouter();
    const [loading, setLoading] = useState(false);
-   const [error, setError] = useState<string | null>(null);
 
    const handleRegister = async (
       username: string,
@@ -46,17 +40,17 @@ export function useRegister() {
       displayname: string
    ) => {
       setLoading(true);
-      setError(null);
       try {
-         const res = await register(username, password, email, displayname);
-         return res.data;
+         await register(username, password, email, displayname);
+         toast.success("Đăng ký thành công 🎉, vui lòng đăng nhập");
+         window.location.reload();
       } catch (err: any) {
-         setError(err.response?.data?.message || "Register failed");
+         toast.error(err.response?.data?.message || "Register failed");
          throw err;
       } finally {
          setLoading(false);
       }
    };
 
-   return { handleRegister, loading, error };
+   return { handleRegister, loading };
 }

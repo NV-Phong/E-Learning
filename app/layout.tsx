@@ -9,6 +9,8 @@ import { Tomorrow } from "next/font/google";
 import { ContributionGraphProvider } from "@/context/cg-context";
 import { Header } from "@/components/ui-engineer/layout/header";
 import { Footer } from "@/components/ui-engineer/layout/footer";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/context/auth-context";
 
 const tomorrow = Tomorrow({
    subsets: ["latin"],
@@ -44,9 +46,12 @@ export default function RootLayout({
             >
                <ContributionGraphProvider>
                   <Spotlight />
-                  <Header />
-                  {children}
-                  <Footer />
+                  <AuthProvider>
+                     <Header />
+                     {children}
+                     <Footer />
+                  </AuthProvider>
+                  <Toaster />
                   <GradientBackground />
                </ContributionGraphProvider>
             </ThemeProvider>

@@ -35,11 +35,10 @@ export default function Auth() {
    const [regEmail, setRegEmail] = useState("");
    const [regDisplay, setRegDisplay] = useState("");
 
-   const { handleLogin, loading: loginLoading, error: loginError } = useLogin();
+   const { handleLogin, loading: loginLoading } = useLogin();
    const {
       handleRegister,
       loading: regLoading,
-      error: regError,
    } = useRegister();
 
    useEffect(() => {
@@ -135,9 +134,6 @@ export default function Auth() {
                               placeholder="Enter Your Password"
                            />
                         </div>
-                        {loginError && (
-                           <p className="text-red-500">{loginError}</p>
-                        )}
                      </CardContent>
 
                      <CardFooter className="flex flex-col p-0">
@@ -212,7 +208,6 @@ export default function Auth() {
                               placeholder="Enter Your Display Name"
                            />
                         </div>
-                        {regError && <p className="text-red-500">{regError}</p>}
                      </CardContent>
 
                      <CardFooter className="flex flex-col p-0">

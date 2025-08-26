@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Menu, User, LogOut } from "lucide-react";
 import {
@@ -13,27 +12,21 @@ import {
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/ui/mode-toggle";
+import { useAuthContext } from "@/context/auth-context";
 
 export function Header() {
-   const [isAuthenticated, setIsAuthenticated] = useState(false);
    const router = useRouter();
-
-   useEffect(() => {
-      // Check if user is authenticated by looking for access token
-      const token = document.cookie.includes("access_token=");
-      setIsAuthenticated(token);
-   }, []);
+   const { isAuthenticated, logout } = useAuthContext();
 
    const handleLogout = () => {
-      document.cookie =
-         "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      setIsAuthenticated(false);
+      logout();
       router.push("/");
    };
 
    return (
       <header className="bg-background/0 backdrop-blur-sm border-b border-border fixed top-0 left-0 right-0 z-50">
          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            {/* Logo */}
             <Link
                href="/"
                className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
@@ -46,6 +39,7 @@ export function Header() {
                </span>
             </Link>
 
+            {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
                <Button variant="ghost" asChild>
                   <Link
@@ -73,6 +67,7 @@ export function Header() {
                </Button>
 
                {isAuthenticated ? (
+                  // Nếu đã đăng nhập
                   <DropdownMenu>
                      <DropdownMenuTrigger asChild>
                         <Button
@@ -98,6 +93,7 @@ export function Header() {
                      </DropdownMenuContent>
                   </DropdownMenu>
                ) : (
+                  // Nếu chưa đăng nhập
                   <>
                      <ModeToggle />
                      <Button
@@ -117,6 +113,7 @@ export function Header() {
                )}
             </nav>
 
+            {/* Mobile menu button */}
             <Button variant="ghost" size="icon" className="md:hidden">
                <Menu className="w-5 h-5" />
             </Button>
