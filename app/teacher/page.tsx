@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import {
    SelectValue,
 } from "@/components/ui/select";
 import { Search, Star, X } from "lucide-react";
-import { teachers } from "@/lib/data";
+import { useTeacher } from "@/hooks/teacher-hooks";
 
 export default function TeachersPage() {
    const [searchQuery, setSearchQuery] = useState("");
@@ -25,51 +25,69 @@ export default function TeachersPage() {
       rating: "",
    });
 
+   const { getTeachers, loading } = useTeacher();
+   const [teachers, setTeachers] = useState<any[]>([]);
+   const [error, setError] = useState<string>("");
+
+   useEffect(() => {
+      (async () => {
+         try {
+            const data = await getTeachers();
+            setTeachers(Array.isArray(data) ? data : []);
+         } catch (e: any) {
+            setError("Không tải được danh sách giáo viên");
+         }
+      })();
+   }, []);
+
    const handleSearch = (value: string) => {
       setSearchQuery(value);
-      if (value.length > 0 && value.length < 2) {
-         console.log("Search query too short");
-      }
    };
 
    const filteredTeachers = useMemo(() => {
       return teachers.filter((teacher) => {
+         const name = (teacher.name || "").toLowerCase();
+         const bio = (teacher.bio || "").toLowerCase();
+         const specialties: string[] = Array.isArray(teacher.certifications)
+            ? teacher.certifications
+            : [];
+
          // Search filter
          if (searchQuery.length >= 2) {
-            const searchLower = searchQuery.toLowerCase();
+            const q = searchQuery.toLowerCase();
             const matchesSearch =
-               teacher.name.toLowerCase().includes(searchLower) ||
-               teacher.description.toLowerCase().includes(searchLower) ||
-               teacher.specialties.some((specialty) =>
-                  specialty.toLowerCase().includes(searchLower)
-               );
+               name.includes(q) ||
+               bio.includes(q) ||
+               specialties.some((s) => s.toLowerCase().includes(q));
             if (!matchesSearch) return false;
          }
 
+         // Specialty filter
          if (selectedFilters.specialty && selectedFilters.specialty !== "all") {
-            const hasSpecialty = teacher.specialties.some((specialty) => {
-               const specialtyLower = specialty.toLowerCase();
+            const hasSpec = specialties.some((s) => {
+               const sl = s.toLowerCase();
                switch (selectedFilters.specialty) {
                   case "ielts":
-                     return specialtyLower.includes("ielts");
+                     return sl.includes("ielts");
                   case "toefl":
-                     return specialtyLower.includes("toefl");
+                     return sl.includes("toefl");
                   case "business":
-                     return specialtyLower.includes("business");
+                     return sl.includes("business");
                   case "conversation":
-                     return specialtyLower.includes("conversation");
+                     return sl.includes("conversation");
                   default:
                      return false;
                }
             });
-            if (!hasSpecialty) return false;
+            if (!hasSpec) return false;
          }
 
+         // Price filter
          if (
             selectedFilters.priceRange &&
             selectedFilters.priceRange !== "all"
          ) {
-            const price = teacher.hourlyRate;
+            const price = Number(teacher.hourlyRate || 0);
             switch (selectedFilters.priceRange) {
                case "under-200k":
                   if (price >= 200000) return false;
@@ -85,13 +103,14 @@ export default function TeachersPage() {
 
          // Rating filter
          if (selectedFilters.rating && selectedFilters.rating !== "all") {
-            const minRating = Number.parseFloat(selectedFilters.rating);
-            if (teacher.rating < minRating) return false;
+            const min = parseFloat(selectedFilters.rating);
+            const rating = Number(teacher.rating?.average || 0);
+            if (rating < min) return false;
          }
 
          return true;
       });
-   }, [searchQuery, selectedFilters]);
+   }, [teachers, searchQuery, selectedFilters]);
 
    const clearFilters = () => {
       setSearchQuery("");
@@ -137,6 +156,7 @@ export default function TeachersPage() {
                               )}
                         </div>
                      </div>
+
                      <Select
                         value={selectedFilters.specialty}
                         onValueChange={(value) =>
@@ -163,6 +183,7 @@ export default function TeachersPage() {
                            </SelectItem>
                         </SelectContent>
                      </Select>
+
                      <Select
                         value={selectedFilters.priceRange}
                         onValueChange={(value) =>
@@ -184,6 +205,7 @@ export default function TeachersPage() {
                            <SelectItem value="above-300k">Trên 300k</SelectItem>
                         </SelectContent>
                      </Select>
+
                      <Select
                         value={selectedFilters.rating}
                         onValueChange={(value) =>
@@ -225,7 +247,20 @@ export default function TeachersPage() {
                </CardContent>
             </Card>
 
-            {filteredTeachers.length === 0 ? (
+            {/* Loading / Error / Empty / List */}
+            {loading ? (
+               <Card className="bg-card border-border">
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                     Đang tải danh sách giáo viên...
+                  </CardContent>
+               </Card>
+            ) : error ? (
+               <Card className="bg-card border-border">
+                  <CardContent className="p-8 text-center text-red-500">
+                     {error}
+                  </CardContent>
+               </Card>
+            ) : filteredTeachers.length === 0 ? (
                <Card className="bg-card border-border">
                   <CardContent className="p-8 text-center">
                      <p className="text-muted-foreground mb-4">
@@ -239,87 +274,103 @@ export default function TeachersPage() {
                </Card>
             ) : (
                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTeachers.map((teacher) => (
-                     <Card
-                        key={teacher.id}
-                        className="bg-card border-border hover:shadow-lg transition-shadow"
-                     >
-                        <CardContent className="p-6">
-                           <div className="flex items-center space-x-4 mb-4">
-                              <Avatar className="w-16 h-16">
-                                 <AvatarImage
-                                    src={teacher.avatar || "/placeholder.svg"}
-                                    alt={teacher.name}
-                                    className="object-cover"
-                                 />
-                                 <AvatarFallback>
-                                    {teacher.name
-                                       .split(" ")
-                                       .map((n) => n[0])
-                                       .join("")}
-                                 </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                 <h3 className="font-semibold text-foreground">
-                                    {teacher.name}
-                                 </h3>
-                                 <p className="text-sm text-muted-foreground">
-                                    {teacher.experience}
-                                 </p>
-                                 <div className="flex items-center space-x-1 mt-1">
-                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                    <span className="text-sm font-medium text-foreground">
-                                       {teacher.rating}
-                                    </span>
-                                    <span className="text-sm text-muted-foreground">
-                                       ({teacher.reviewCount})
-                                    </span>
+                  {filteredTeachers.map((teacher: any) => {
+                     const id = teacher._id || teacher.id;
+                     const name = teacher.name || "Teacher";
+                     const avatar = teacher.avatar || "/placeholder.svg";
+                     const experience = `${
+                        teacher.experienceYears || 0
+                     } năm kinh nghiệm`;
+                     const rating = Number(teacher.rating?.average || 0);
+                     const reviewCount = Number(teacher.rating?.count || 0);
+                     const specialties: string[] = Array.isArray(
+                        teacher.certifications
+                     )
+                        ? teacher.certifications
+                        : [];
+                     const hourly = Number(teacher.hourlyRate || 0);
+
+                     return (
+                        <Card
+                           key={id}
+                           className="bg-card border-border hover:shadow-lg transition-shadow"
+                        >
+                           <CardContent className="p-6">
+                              <div className="flex items-center space-x-4 mb-4">
+                                 <Avatar className="w-16 h-16">
+                                    <AvatarImage
+                                       src={avatar}
+                                       alt={name}
+                                       className="object-cover"
+                                    />
+                                    <AvatarFallback>
+                                       {name
+                                          .split(" ")
+                                          .map((n: string) => n[0])
+                                          .join("")}
+                                    </AvatarFallback>
+                                 </Avatar>
+                                 <div>
+                                    <h3 className="font-semibold text-foreground">
+                                       {name}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                       {experience}
+                                    </p>
+                                    <div className="flex items-center space-x-1 mt-1">
+                                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                       <span className="text-sm font-medium text-foreground">
+                                          {rating.toFixed(1)}
+                                       </span>
+                                       <span className="text-sm text-muted-foreground">
+                                          ({reviewCount})
+                                       </span>
+                                    </div>
                                  </div>
                               </div>
-                           </div>
 
-                           <div className="mb-4">
-                              <div className="flex flex-wrap gap-1 mb-2">
-                                 {teacher.specialties.map((specialty) => (
-                                    <Badge
-                                       key={specialty}
-                                       variant="secondary"
-                                       className="bg-primary/10 text-primary"
-                                    >
-                                       {specialty}
-                                    </Badge>
-                                 ))}
+                              <div className="mb-4">
+                                 <div className="flex flex-wrap gap-1 mb-2">
+                                    {specialties.map((s) => (
+                                       <Badge
+                                          key={s}
+                                          variant="secondary"
+                                          className="bg-primary/10 text-primary"
+                                       >
+                                          {s}
+                                       </Badge>
+                                    ))}
+                                 </div>
+                                 <p className="text-lg font-semibold text-foreground">
+                                    {hourly.toLocaleString("vi-VN")}đ/giờ
+                                 </p>
                               </div>
-                              <p className="text-lg font-semibold text-foreground">
-                                 {teacher.hourlyRate.toLocaleString("vi-VN")}
-                                 đ/giờ
-                              </p>
-                           </div>
 
-                           <div className="flex space-x-2">
-                              <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="flex-1 border-border text-foreground hover:bg-accent bg-transparent"
-                                 asChild
-                              >
-                                 <Link href={`/teacher/${teacher.id}`}>
-                                    Xem chi tiết
-                                 </Link>
-                              </Button>
-                              <Button
-                                 size="sm"
-                                 className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                                 asChild
-                              >
-                                 <Link href={`/booking?teacher=${teacher.id}`}>
-                                    Đặt lịch
-                                 </Link>
-                              </Button>
-                           </div>
-                        </CardContent>
-                     </Card>
-                  ))}
+                              <div className="flex space-x-2">
+                                 <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 border-border text-foreground hover:bg-accent bg-transparent"
+                                    asChild
+                                 >
+                                    <Link href={`/teacher/${id}`}>
+                                       Xem chi tiết
+                                    </Link>
+                                 </Button>
+                                 <Button
+                                    size="sm"
+                                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                                    asChild
+                                 >
+                                    <Link href={`/booking?teacher=${id}`}>
+                                       Đặt lịch
+                                    </Link>
+                                 </Button>
+                              </div>
+                           </CardContent>
+                        </Card>
+                     );
+                  })}
                </div>
             )}
          </div>
