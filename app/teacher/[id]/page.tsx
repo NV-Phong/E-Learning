@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Star, Award, Globe } from "lucide-react";
-import { teachers, reviews } from "@/lib/data";
+import { Star, Award, Loader2 } from "lucide-react";
+import { useTeacher } from "@/hooks/teacher-hooks";
 
 interface TeacherDetailPageProps {
    params: Promise<{
@@ -18,12 +18,89 @@ interface TeacherDetailPageProps {
    }>;
 }
 
+interface Teacher {
+   _id: string;
+   userID: string;
+   name: string;
+   bio: string;
+   experienceYears: number;
+   certifications: string[];
+   hourlyRate: number;
+   isDeleted: boolean;
+   rating: {
+      average: number;
+      count: number;
+   };
+   availability: Array<{
+      start: string;
+      end: string;
+   }>;
+   reviews: Array<{
+      comment: string;
+      rating: number;
+      studentName: string;
+      date: string;
+   }>;
+   createdAt: string;
+   updatedAt: string;
+}
+
 export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
       new Date()
    );
+   const [teacher, setTeacher] = useState<Teacher | null>(null);
+   const [error, setError] = useState<string | null>(null);
+   const { getTeacher, loading } = useTeacher();
    const { id } = use(params);
-   const teacher = teachers.find((t) => t.id === id);
+
+   useEffect(() => {
+      console.log("[v0] useEffect triggered with id:", id);
+      const fetchTeacher = async () => {
+         try {
+            console.log("[v0] Starting to fetch teacher data");
+            setError(null);
+            const teacherData = await getTeacher(id);
+            console.log("[v0] Teacher data received:", teacherData);
+            setTeacher(teacherData);
+         } catch (err) {
+            console.log("[v0] Error fetching teacher:", err);
+            setError("Không thể tải thông tin giáo viên");
+         }
+      };
+
+      if (id) {
+         fetchTeacher();
+      }
+   }, [id]); // Removed getTeacher from dependencies to prevent infinite loop
+
+   if (loading) {
+      return (
+         <div className="min-h-screen py-8">
+            <div className="container mx-auto px-4 text-center mt-15">
+               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+               <p className="text-muted-foreground">
+                  Đang tải thông tin giáo viên...
+               </p>
+            </div>
+         </div>
+      );
+   }
+
+   if (error) {
+      return (
+         <div className="min-h-screen py-8">
+            <div className="container mx-auto px-4 text-center mt-15">
+               <h1 className="text-2xl font-bold text-foreground mb-4">
+                  {error}
+               </h1>
+               <Button asChild>
+                  <Link href="/teacher">Quay lại danh sách</Link>
+               </Button>
+            </div>
+         </div>
+      );
+   }
 
    if (!teacher) {
       return (
@@ -39,6 +116,22 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
          </div>
       );
    }
+
+   const formatAvailabilityTimes = (availability: Teacher["availability"]) => {
+      return availability.map((slot) => {
+         const start = new Date(slot.start);
+         const end = new Date(slot.end);
+         return `${start.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+         })} - ${end.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+         })}`;
+      });
+   };
+
+   const availabilityTimes = formatAvailabilityTimes(teacher.availability);
 
    return (
       <div className="min-h-screen py-8">
@@ -58,7 +151,9 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                         <div className="flex items-start space-x-6 mb-6">
                            <Avatar className="w-24 h-24">
                               <AvatarImage
-                                 src={teacher.avatar || "/placeholder.svg"}
+                                 src={`/placeholder.jpg?key=solcb&height=96&width=96&text=${encodeURIComponent(
+                                    teacher.name
+                                 )}`}
                                  alt={teacher.name}
                                  className="object-cover"
                               />
@@ -74,16 +169,16 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  {teacher.name}
                               </h1>
                               <p className="text-muted-foreground mb-3">
-                                 {teacher.experience}
+                                 {teacher.bio}
                               </p>
                               <div className="flex items-center space-x-4 mb-3">
                                  <div className="flex items-center space-x-1">
                                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                                     <span className="font-medium text-foreground">
-                                       {teacher.rating}
+                                       {teacher.rating.average}
                                     </span>
                                     <span className="text-muted-foreground">
-                                       ({teacher.reviewCount} đánh giá)
+                                       ({teacher.rating.count} đánh giá)
                                     </span>
                                  </div>
                                  <div className="text-xl font-bold text-primary">
@@ -91,16 +186,13 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                     đ/giờ
                                  </div>
                               </div>
-                              <div className="flex flex-wrap gap-2">
-                                 {teacher.specialties.map((specialty) => (
-                                    <Badge
-                                       key={specialty}
-                                       variant="secondary"
-                                       className="bg-primary/10 text-primary"
-                                    >
-                                       {specialty}
-                                    </Badge>
-                                 ))}
+                              <div className="mb-3">
+                                 <Badge
+                                    variant="secondary"
+                                    className="bg-primary/10 text-primary"
+                                 >
+                                    {teacher.experienceYears} năm kinh nghiệm
+                                 </Badge>
                               </div>
                            </div>
                         </div>
@@ -113,7 +205,7 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  Giới thiệu
                               </h3>
                               <p className="text-muted-foreground">
-                                 {teacher.description}
+                                 {teacher.bio}
                               </p>
                            </div>
 
@@ -122,7 +214,7 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  Chứng chỉ
                               </h3>
                               <div className="flex flex-wrap gap-2">
-                                 {teacher.certificates.map((cert) => (
+                                 {teacher.certifications.map((cert) => (
                                     <Badge
                                        key={cert}
                                        variant="outline"
@@ -130,24 +222,6 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                     >
                                        <Award className="w-3 h-3 mr-1" />
                                        {cert}
-                                    </Badge>
-                                 ))}
-                              </div>
-                           </div>
-
-                           <div>
-                              <h3 className="font-semibold text-foreground mb-2">
-                                 Ngôn ngữ
-                              </h3>
-                              <div className="flex flex-wrap gap-2">
-                                 {teacher.languages.map((lang) => (
-                                    <Badge
-                                       key={lang}
-                                       variant="outline"
-                                       className="border-border text-foreground"
-                                    >
-                                       <Globe className="w-3 h-3 mr-1" />
-                                       {lang}
                                     </Badge>
                                  ))}
                               </div>
@@ -165,9 +239,9 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                      </CardHeader>
                      <CardContent>
                         <div className="space-y-4">
-                           {reviews.map((review) => (
+                           {teacher.reviews.map((review, index) => (
                               <div
-                                 key={review.id}
+                                 key={index}
                                  className="border-b border-border pb-4 last:border-b-0"
                               >
                                  <div className="flex items-center justify-between mb-2">
@@ -198,7 +272,9 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                     {review.comment}
                                  </p>
                                  <p className="text-sm text-muted-foreground mt-1">
-                                    {review.date}
+                                    {new Date(review.date).toLocaleDateString(
+                                       "vi-VN"
+                                    )}
                                  </p>
                               </div>
                            ))}
@@ -233,16 +309,22 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                                  Khung giờ có sẵn
                               </Label>
                               <div className="grid grid-cols-2 gap-2 mt-2">
-                                 {teacher.availability.map((time) => (
-                                    <Button
-                                       key={time}
-                                       variant="outline"
-                                       size="sm"
-                                       className="border-border text-foreground hover:bg-accent bg-transparent"
-                                    >
-                                       {time}
-                                    </Button>
-                                 ))}
+                                 {availabilityTimes.length > 0 ? (
+                                    availabilityTimes.map((time, index) => (
+                                       <Button
+                                          key={index}
+                                          variant="outline"
+                                          size="sm"
+                                          className="border-border text-foreground hover:bg-accent bg-transparent"
+                                       >
+                                          {time}
+                                       </Button>
+                                    ))
+                                 ) : (
+                                    <p className="text-muted-foreground col-span-2 text-center py-2">
+                                       Hiện tại không có khung giờ nào
+                                    </p>
+                                 )}
                               </div>
                            </div>
 
@@ -250,7 +332,7 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
                               className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                               asChild
                            >
-                              <Link href={`/booking?teacher=${teacher.id}`}>
+                              <Link href={`/booking?teacher=${teacher._id}`}>
                                  Đặt lịch học thử
                               </Link>
                            </Button>
