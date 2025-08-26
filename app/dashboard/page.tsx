@@ -19,6 +19,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Play, Shield, CheckCircle } from "lucide-react";
+import { useUser } from "@/hooks/user-hooks";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -27,6 +29,23 @@ export default function DashboardPage() {
    const [isAuthenticated, setIsAuthenticated] = useState(false);
    const router = useRouter();
 
+   const { getProfile, updateUser, loading } = useUser();
+
+   const [profileData, setProfileData] = useState({
+      fullname: "",
+      email: "",
+      phone: "",
+      level: "",
+      avatar: "",
+      id: "",
+   });
+   const [errors, setErrors] = useState<Record<string, string>>({});
+
+   // giả lập dữ liệu lịch học & gói học (sau này bạn thay API vào)
+   const [scheduleData, setScheduleData] = useState<any[]>([]);
+   const [packages, setPackages] = useState<any[]>([]);
+
+   // ✅ Check auth + load profile
    useEffect(() => {
       const token = document.cookie.includes("access_token=");
       if (!token) {
@@ -34,64 +53,79 @@ export default function DashboardPage() {
          return;
       }
       setIsAuthenticated(true);
-   }, [router]);
 
-   const [profileData, setProfileData] = useState({
-      fullname: "Nguyễn Văn Phong",
-      email: "nv.phong.pro@email.com",
-      phone: "0337614610",
-      level: "intermediate",
-   });
-   const [errors, setErrors] = useState<Record<string, string>>({});
+      (async () => {
+         try {
+            const data = await getProfile();
+            setProfileData({
+               fullname: data.displayName || "",
+               email: data.email || "",
+               phone: data.phone || "",
+               level: data.level || "beginner",
+               avatar: data.avatar || "https://i.pinimg.com/1200x/33/0d/65/330d65ae9227237d78b906446b08945c.jpg",
+               id: data._id,
+            });
+         } catch (err) {
+            console.error(err);
+         }
+      })();
+   }, [router]);
 
    const validateProfile = () => {
       const newErrors: Record<string, string> = {};
-
-      // Full name validation
       if (!profileData.fullname.trim()) {
          newErrors.fullname = "Họ và tên là bắt buộc";
       } else if (profileData.fullname.trim().length < 2) {
          newErrors.fullname = "Họ và tên phải có ít nhất 2 ký tự";
       }
-
-      // Email validation
       if (!profileData.email.trim()) {
          newErrors.email = "Email là bắt buộc";
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
          newErrors.email = "Email không hợp lệ";
       }
-
-      // Phone validation
       if (!profileData.phone.trim()) {
          newErrors.phone = "Số điện thoại là bắt buộc";
       } else if (!/^[0-9]{10,11}$/.test(profileData.phone.replace(/\s/g, ""))) {
          newErrors.phone = "Số điện thoại phải có 10-11 chữ số";
       }
-
-      // Level validation
       if (!profileData.level) {
          newErrors.level = "Vui lòng chọn trình độ";
       }
-
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
    };
 
    const handleProfileChange = (field: string, value: string) => {
       setProfileData((prev) => ({ ...prev, [field]: value }));
-      // Clear error when user starts typing
       if (errors[field]) {
          setErrors((prev) => ({ ...prev, [field]: "" }));
       }
    };
 
-   const handleProfileUpdate = () => {
-      if (!validateProfile()) {
-         return;
-      }
+   const handleProfileUpdate = async () => {
+      if (!validateProfile()) return;
+      try {
+         await updateUser(profileData.id, {
+            displayName: profileData.fullname,
+            email: profileData.email,
+            phone: profileData.phone,
+            level: profileData.level,
+         });
 
-      // Here you would typically send the data to your API
-      alert("Thông tin đã được cập nhật thành công!");
+         const updated = await getProfile();
+         setProfileData({
+            fullname: updated.displayName || "",
+            email: updated.email || "",
+            phone: updated.phone || "",
+            level: updated.level || "beginner",
+            avatar: updated.avatar || "https://www.gravatar.com/avatar",
+            id: updated._id,
+         });
+
+         toast.success("Cập nhật thông tin thành công 🎉");
+      } catch (err: any) {
+         toast.error(err.response?.data?.message || "Cập nhật thất bại");
+      }
    };
 
    if (!isAuthenticated) {
@@ -129,23 +163,12 @@ export default function DashboardPage() {
 
             <Tabs defaultValue="schedule" className="space-y-6">
                <TabsList className="bg-muted">
-                  <TabsTrigger
-                     value="schedule"
-                     className="data-[state=active]:"
-                  >
-                     Lịch học
-                  </TabsTrigger>
-                  <TabsTrigger
-                     value="packages"
-                     className="data-[state=active]:"
-                  >
-                     Gói học
-                  </TabsTrigger>
-                  <TabsTrigger value="profile" className="data-[state=active]:">
-                     Thông tin cá nhân
-                  </TabsTrigger>
+                  <TabsTrigger value="schedule">Lịch học</TabsTrigger>
+                  <TabsTrigger value="packages">Gói học</TabsTrigger>
+                  <TabsTrigger value="profile">Thông tin cá nhân</TabsTrigger>
                </TabsList>
 
+               {/* --- Lịch học --- */}
                <TabsContent value="schedule">
                   <div className="grid lg:grid-cols-3 gap-6">
                      <div className="lg:col-span-2">
@@ -156,12 +179,18 @@ export default function DashboardPage() {
                               </CardTitle>
                            </CardHeader>
                            <CardContent>
-                              <Calendar
-                                 mode="single"
-                                 selected={selectedDate}
-                                 onSelect={setSelectedDate}
-                                 className="rounded-md border border-border"
-                              />
+                              {scheduleData.length > 0 ? (
+                                 <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    className="rounded-md border border-border"
+                                 />
+                              ) : (
+                                 <div className="text-center py-6 text-muted-foreground">
+                                    Bạn chưa có lịch học nào 📅
+                                 </div>
+                              )}
                            </CardContent>
                         </Card>
                      </div>
@@ -174,41 +203,48 @@ export default function DashboardPage() {
                               </CardTitle>
                            </CardHeader>
                            <CardContent>
-                              <div className="space-y-4">
-                                 <div className="p-4 bg-accent/10 rounded-lg">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                       <Avatar className="w-10 h-10">
-                                          <AvatarImage src="/teacher-portrait.png" />
-                                          <AvatarFallback>SJ</AvatarFallback>
-                                       </Avatar>
-                                       <div>
-                                          <p className="font-medium text-foreground">
-                                             Sarah Johnson
-                                          </p>
-                                          <p className="text-sm text-muted-foreground">
-                                             IELTS Speaking
-                                          </p>
+                              {scheduleData.length > 0 ? (
+                                 <div className="space-y-4">
+                                    <div className="p-4 bg-accent/10 rounded-lg">
+                                       <div className="flex items-center space-x-3 mb-2">
+                                          <Avatar className="w-10 h-10">
+                                             <AvatarImage src="/teacher-portrait.png" />
+                                             <AvatarFallback>SJ</AvatarFallback>
+                                          </Avatar>
+                                          <div>
+                                             <p className="font-medium text-foreground">
+                                                Sarah Johnson
+                                             </p>
+                                             <p className="text-sm text-muted-foreground">
+                                                IELTS Speaking
+                                             </p>
+                                          </div>
                                        </div>
+                                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                                          <Clock className="w-4 h-4" />
+                                          <span>2:00 PM - 3:00 PM</span>
+                                       </div>
+                                       <Button
+                                          size="sm"
+                                          className="w-full mt-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                                       >
+                                          <Play className="w-4 h-4 mr-2" />
+                                          Tham gia lớp học
+                                       </Button>
                                     </div>
-                                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                                       <Clock className="w-4 h-4" />
-                                       <span>2:00 PM - 3:00 PM</span>
-                                    </div>
-                                    <Button
-                                       size="sm"
-                                       className="w-full mt-3 bg-primary text-primary-foreground hover:bg-primary/90"
-                                    >
-                                       <Play className="w-4 h-4 mr-2" />
-                                       Tham gia lớp học
-                                    </Button>
                                  </div>
-                              </div>
+                              ) : (
+                                 <div className="text-center py-6 text-muted-foreground">
+                                    Hôm nay bạn chưa có buổi học nào 🎓
+                                 </div>
+                              )}
                            </CardContent>
                         </Card>
                      </div>
                   </div>
                </TabsContent>
 
+               {/* --- Gói học --- */}
                <TabsContent value="packages">
                   <Card className="bg-card border-border">
                      <CardHeader>
@@ -217,44 +253,51 @@ export default function DashboardPage() {
                         </CardTitle>
                      </CardHeader>
                      <CardContent>
-                        <div className="space-y-4">
-                           <div className="p-4 border border-border rounded-lg">
-                              <div className="flex justify-between items-start mb-3">
-                                 <div>
-                                    <h3 className="font-semibold text-foreground">
-                                       Gói Phổ Biến
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground">
-                                       10 buổi học 1-1
-                                    </p>
+                        {packages.length > 0 ? (
+                           <div className="space-y-4">
+                              <div className="p-4 border border-border rounded-lg">
+                                 <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                       <h3 className="font-semibold text-foreground">
+                                          Gói Phổ Biến
+                                       </h3>
+                                       <p className="text-sm text-muted-foreground">
+                                          10 buổi học 1-1
+                                       </p>
+                                    </div>
+                                    <Badge
+                                       variant="secondary"
+                                       className="bg-green-100 text-green-800"
+                                    >
+                                       Đang hoạt động
+                                    </Badge>
                                  </div>
-                                 <Badge
-                                    variant="secondary"
-                                    className="bg-green-100 text-green-800"
-                                 >
-                                    Đang hoạt động
-                                 </Badge>
-                              </div>
-                              <div className="space-y-2">
-                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">
-                                       Đã sử dụng
-                                    </span>
-                                    <span className="text-foreground">
-                                       3/10 buổi
-                                    </span>
+                                 <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                       <span className="text-muted-foreground">
+                                          Đã sử dụng
+                                       </span>
+                                       <span className="text-foreground">
+                                          3/10 buổi
+                                       </span>
+                                    </div>
+                                    <Progress value={30} className="h-2" />
                                  </div>
-                                 <Progress value={30} className="h-2" />
-                              </div>
-                              <div className="mt-3 text-sm text-muted-foreground">
-                                 Hết hạn: 30/06/2024
+                                 <div className="mt-3 text-sm text-muted-foreground">
+                                    Hết hạn: 30/06/2024
+                                 </div>
                               </div>
                            </div>
-                        </div>
+                        ) : (
+                           <div className="text-center py-6 text-muted-foreground">
+                              Bạn chưa đăng ký gói học nào 📦
+                           </div>
+                        )}
                      </CardContent>
                   </Card>
                </TabsContent>
 
+               {/* --- Hồ sơ cá nhân --- */}
                <TabsContent value="profile">
                   <Card className="bg-card border-border">
                      <CardHeader>
@@ -267,7 +310,7 @@ export default function DashboardPage() {
                         <div className="space-y-6">
                            <div className="flex items-center space-x-4">
                               <Avatar className="w-20 h-20">
-                                 <AvatarImage src="/diverse-user-avatars.png" />
+                                 <AvatarImage src={profileData.avatar} className="object-cover"/>
                                  <AvatarFallback>NV</AvatarFallback>
                               </Avatar>
                               <Button
@@ -289,7 +332,7 @@ export default function DashboardPage() {
                                  </Label>
                                  <Input
                                     id="fullname"
-                                    className={` ${
+                                    className={`${
                                        errors.fullname
                                           ? "border-red-500"
                                           : "border-border"
@@ -319,7 +362,7 @@ export default function DashboardPage() {
                                  <Input
                                     id="email"
                                     type="email"
-                                    className={` ${
+                                    className={`${
                                        errors.email
                                           ? "border-red-500"
                                           : "border-border"
@@ -351,7 +394,7 @@ export default function DashboardPage() {
                               <Input
                                  id="phone"
                                  placeholder="Nhập số điện thoại (10-11 chữ số)"
-                                 className={` ${
+                                 className={`${
                                     errors.phone
                                        ? "border-red-500"
                                        : "border-border"
@@ -383,7 +426,7 @@ export default function DashboardPage() {
                                  }
                               >
                                  <SelectTrigger
-                                    className={` ${
+                                    className={`${
                                        errors.level
                                           ? "border-red-500"
                                           : "border-border"
@@ -414,10 +457,13 @@ export default function DashboardPage() {
                            </div>
 
                            <Button
+                              disabled={loading}
                               className="bg-primary text-primary-foreground hover:bg-primary/90"
                               onClick={handleProfileUpdate}
                            >
-                              Cập nhật thông tin
+                              {loading
+                                 ? "Đang cập nhật..."
+                                 : "Cập nhật thông tin"}
                            </Button>
                         </div>
                      </CardContent>

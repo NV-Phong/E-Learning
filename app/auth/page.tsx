@@ -116,12 +116,12 @@ export default function Auth() {
                         </div>
                         <Separator />
                         <div className="space-y-1">
-                           <Label htmlFor="username">Email or Username</Label>
+                           <Label htmlFor="username">Username</Label>
                            <Input
                               className=" text-sm border-primary/30 dark:border-input"
                               value={loginUsername}
                               onChange={(e) => setLoginUsername(e.target.value)}
-                              placeholder="Enter Your UserName"
+                              placeholder="Enter Your Username"
                            />
                         </div>
                         <div className="space-y-1">
