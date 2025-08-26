@@ -103,7 +103,7 @@ export default function Auth() {
                               variant={"ghost"}
                               className="border shadow-sm"
                            >
-                              <Icon styles="solid" name="Github" />
+                              <Icon styles="solid" name="github" />
                               Github
                            </Button>
                            <Button

@@ -68,30 +68,33 @@ export function Header() {
 
                {isAuthenticated ? (
                   // Nếu đã đăng nhập
-                  <DropdownMenu>
-                     <DropdownMenuTrigger asChild>
-                        <Button
-                           variant="outline"
-                           className="border-border text-foreground hover:bg-accent bg-transparent"
-                        >
-                           <User className="w-4 h-4 mr-2" />
-                           Tài khoản
-                        </Button>
-                     </DropdownMenuTrigger>
-                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                           <Link href="/dashboard">
+                  <div className="flex gap-3">
+                     <ModeToggle />
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                           <Button
+                              variant="outline"
+                              className="border-border text-foreground hover:bg-accent bg-transparent"
+                           >
                               <User className="w-4 h-4 mr-2" />
-                              Dashboard
-                           </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
-                           <LogOut className="w-4 h-4 mr-2" />
-                           Đăng xuất
-                        </DropdownMenuItem>
-                     </DropdownMenuContent>
-                  </DropdownMenu>
+                              Tài khoản
+                           </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                           <DropdownMenuItem asChild>
+                              <Link href="/dashboard">
+                                 <User className="w-4 h-4 mr-2" />
+                                 Dashboard
+                              </Link>
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem onClick={handleLogout}>
+                              <LogOut className="w-4 h-4 mr-2" />
+                              Đăng xuất
+                           </DropdownMenuItem>
+                        </DropdownMenuContent>
+                     </DropdownMenu>
+                  </div>
                ) : (
                   // Nếu chưa đăng nhập
                   <>
