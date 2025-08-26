@@ -9,46 +9,28 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, QrCode } from "lucide-react";
+import { CreditCard, QrCode, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { useTeacher } from "@/hooks/teacher-hooks";
+import { learningPackages } from "@/lib/data";
+import Link from "next/link";
 
 interface Package {
    id: string;
    name: string;
    price: number;
    sessions: number;
+   originalPrice?: number;
+   features: string[];
+   popular?: boolean;
    description?: string;
 }
-
-const learningPackages: Package[] = [
-   {
-      id: "basic",
-      name: "Gói cơ bản",
-      price: 500000,
-      sessions: 4,
-      description: "4 buổi học 1-1 với giáo viên",
-   },
-   {
-      id: "standard",
-      name: "Gói tiêu chuẩn",
-      price: 900000,
-      sessions: 8,
-      description: "8 buổi học 1-1 với giáo viên",
-   },
-   {
-      id: "premium",
-      name: "Gói cao cấp",
-      price: 1600000,
-      sessions: 16,
-      description: "16 buổi học 1-1 với giáo viên",
-   },
-];
 
 export default function PaymentForm() {
    const searchParams = useSearchParams();
    const router = useRouter();
    const packageId = searchParams.get("package");
+   const packageName = searchParams.get("packageName");
    const teacherId = searchParams.get("teacher");
    const bookingType = searchParams.get("type");
    const bookingDate = searchParams.get("date");
@@ -59,7 +41,6 @@ export default function PaymentForm() {
    const studentGoals = searchParams.get("goals");
 
    const [paymentMethod, setPaymentMethod] = useState("card");
-
    const { getTeacher, loading } = useTeacher();
    const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
 
@@ -178,16 +159,33 @@ export default function PaymentForm() {
          return;
       }
 
+      if (!selectedPackage && !selectedTeacher) {
+         setErrors((prev) => ({
+            ...prev,
+            general: "Vui lòng chọn gói học hoặc giáo viên",
+         }));
+         return;
+      }
+
       const params = new URLSearchParams({
          type: "payment",
          method: paymentMethod,
-         ...(selectedPackage && { package: selectedPackage.name }),
-         ...(selectedTeacher && { teacher: selectedTeacher.name }),
+         ...(selectedPackage && {
+            packageId: selectedPackage.id,
+            packageName: selectedPackage.name,
+         }),
+         ...(selectedTeacher && {
+            teacher: selectedTeacher.name,
+            teacherId: selectedTeacher._id,
+         }),
          ...(bookingDate && {
-            date: new Date(bookingDate).toLocaleDateString("vi-VN"),
+            date: new Date(bookingDate).toISOString().split("T")[0],
          }),
          ...(bookingTime && { time: bookingTime }),
          ...(studentLevel && { level: studentLevel }),
+         ...(studentName && { name: studentName }),
+         ...(studentEmail && { email: studentEmail }),
+         ...(studentGoals && { goals: studentGoals }),
       });
 
       router.push(`/success?${params.toString()}`);
@@ -204,6 +202,24 @@ export default function PaymentForm() {
       );
    }
 
+   if (!selectedPackage && !selectedTeacher) {
+      return (
+         <div className="min-h-screen py-8 flex justify-center items-center">
+            <div className="text-center">
+               <p className="text-red-500 text-lg mb-4">
+                  Vui lòng chọn gói học hoặc giáo viên để tiếp tục thanh toán.
+               </p>
+               <Button
+                  asChild
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+               >
+                  <Link href="/course">Quay lại chọn gói học</Link>
+               </Button>
+            </div>
+         </div>
+      );
+   }
+
    return (
       <div className="min-h-screen py-8">
          <div className="container mx-auto px-4 max-w-2xl mt-15">
@@ -215,6 +231,10 @@ export default function PaymentForm() {
                   : "Thanh toán"}
             </h1>
 
+            {errors.general && (
+               <p className="text-red-500 text-center mb-4">{errors.general}</p>
+            )}
+
             <Card className="bg-card border-border mb-6">
                <CardHeader>
                   <CardTitle className="text-foreground">
@@ -225,16 +245,48 @@ export default function PaymentForm() {
                   {selectedPackage ? (
                      <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                           <span className="text-foreground">
+                           <span className="text-foreground font-semibold">
                               {selectedPackage.name}
                            </span>
-                           <span className="font-semibold text-foreground">
+                           <span className="font-semibold text-primary">
                               {selectedPackage.price.toLocaleString("vi-VN")}đ
                            </span>
                         </div>
+                        {selectedPackage.originalPrice && (
+                           <div className="text-sm text-muted-foreground">
+                              Giá gốc:{" "}
+                              <span className="line-through">
+                                 {selectedPackage.originalPrice.toLocaleString(
+                                    "vi-VN"
+                                 )}
+                                 đ
+                              </span>
+                           </div>
+                        )}
                         <div className="text-sm text-muted-foreground">
                            {selectedPackage.sessions} buổi học 1-1
                         </div>
+                        {selectedPackage.features &&
+                           selectedPackage.features.length > 0 && (
+                              <div>
+                                 <p className="text-sm font-medium text-foreground">
+                                    Tính năng:
+                                 </p>
+                                 <ul className="list-disc list-inside text-sm text-muted-foreground">
+                                    {selectedPackage.features.map(
+                                       (feature, index) => (
+                                          <li key={index}>{feature}</li>
+                                       )
+                                    )}
+                                 </ul>
+                              </div>
+                           )}
+                        {selectedPackage.popular && (
+                           <div className="flex items-center text-sm text-green-600">
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Gói phổ biến
+                           </div>
+                        )}
                         <Separator />
                         <div className="flex justify-between items-center font-bold">
                            <span className="text-foreground">Tổng cộng:</span>
@@ -275,7 +327,6 @@ export default function PaymentForm() {
                                     </p>
                                  </div>
                               </div>
-
                               {bookingType === "booking" && (
                                  <div className="bg-muted/50 p-4 rounded-lg mb-4">
                                     <h4 className="font-semibold text-foreground mb-2">
@@ -295,9 +346,7 @@ export default function PaymentForm() {
                                              <span className="font-medium">
                                                 Ngày học:
                                              </span>{" "}
-                                             {new Date(
-                                                bookingDate
-                                             ).toLocaleDateString("vi-VN")}
+                                             {bookingDate}
                                           </p>
                                        )}
                                        {bookingTime && (
@@ -325,32 +374,18 @@ export default function PaymentForm() {
                                                 : studentLevel}
                                           </p>
                                        )}
-                                       {studentGoals && (
-                                          <p>
-                                             <span className="font-medium">
-                                                Mục tiêu:
-                                             </span>{" "}
-                                             {studentGoals}
-                                          </p>
-                                       )}
                                     </div>
                                  </div>
                               )}
-
-                              <Separator />
-                              <div className="flex justify-between items-center font-bold mt-4">
-                                 <span className="text-foreground">
-                                    Tổng cộng (1 buổi):
-                                 </span>
-                                 <span className="text-primary text-xl">
-                                    {selectedTeacher.hourlyRate?.toLocaleString(
-                                       "vi-VN"
-                                    )}
-                                    đ
-                                 </span>
-                              </div>
                            </div>
                         )}
+                        <Separator />
+                        <div className="flex justify-between items-center font-bold">
+                           <span className="text-foreground">Tổng cộng:</span>
+                           <span className="text-primary text-xl">
+                              {totalAmount.toLocaleString("vi-VN")}đ
+                           </span>
+                        </div>
                      </div>
                   )}
                </CardContent>
@@ -364,89 +399,76 @@ export default function PaymentForm() {
                </CardHeader>
                <CardContent>
                   <Tabs
-                     value={paymentMethod}
-                     onValueChange={setPaymentMethod}
+                     defaultValue="card"
+                     onValueChange={(value) => setPaymentMethod(value)}
                      className="w-full"
                   >
-                     <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger
-                           value="card"
-                           className="flex items-center gap-2"
-                        >
-                           <CreditCard className="w-4 h-4" />
+                     <TabsList className="grid w-full grid-cols-2 bg-muted">
+                        <TabsTrigger value="card">
+                           <CreditCard className="w-4 h-4 mr-2" />
                            Thẻ tín dụng
                         </TabsTrigger>
-                        <TabsTrigger
-                           value="qr"
-                           className="flex items-center gap-2"
-                        >
-                           <QrCode className="w-4 h-4" />
-                           Quét mã QR
+                        <TabsTrigger value="qr">
+                           <QrCode className="w-4 h-4 mr-2" />
+                           QR Code
                         </TabsTrigger>
                      </TabsList>
 
                      <TabsContent value="card" className="space-y-6 mt-6">
-                        <div className="grid md:grid-cols-2 gap-4">
-                           <div>
-                              <Label
-                                 htmlFor="cardName"
-                                 className="text-foreground"
-                              >
-                                 Họ tên trên thẻ{" "}
-                                 <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                 id="cardName"
-                                 placeholder="Nhập họ tên"
-                                 className={`${
-                                    errors.cardName
-                                       ? "border-red-500"
-                                       : "border-border"
-                                 }`}
-                                 value={formData.cardName}
-                                 onChange={(e) =>
-                                    handleInputChange(
-                                       "cardName",
-                                       e.target.value
-                                    )
-                                 }
-                              />
-                              {errors.cardName && (
-                                 <p className="text-red-500 text-sm mt-1">
-                                    {errors.cardName}
-                                 </p>
-                              )}
-                           </div>
-                           <div>
-                              <Label
-                                 htmlFor="cardNumber"
-                                 className="text-foreground"
-                              >
-                                 Số thẻ <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                 id="cardNumber"
-                                 placeholder="**** **** **** ****"
-                                 className={`${
-                                    errors.cardNumber
-                                       ? "border-red-500"
-                                       : "border-border"
-                                 }`}
-                                 value={formData.cardNumber}
-                                 onChange={(e) =>
-                                    handleInputChange(
-                                       "cardNumber",
-                                       e.target.value
-                                    )
-                                 }
-                                 maxLength={19}
-                              />
-                              {errors.cardNumber && (
-                                 <p className="text-red-500 text-sm mt-1">
-                                    {errors.cardNumber}
-                                 </p>
-                              )}
-                           </div>
+                        <div>
+                           <Label
+                              htmlFor="cardName"
+                              className="text-foreground"
+                           >
+                              Họ tên trên thẻ{" "}
+                              <span className="text-red-500">*</span>
+                           </Label>
+                           <Input
+                              id="cardName"
+                              placeholder="Nhập họ tên trên thẻ"
+                              className={`${
+                                 errors.cardName
+                                    ? "border-red-500"
+                                    : "border-border"
+                              }`}
+                              value={formData.cardName}
+                              onChange={(e) =>
+                                 handleInputChange("cardName", e.target.value)
+                              }
+                           />
+                           {errors.cardName && (
+                              <p className="text-red-500 text-sm mt-1">
+                                 {errors.cardName}
+                              </p>
+                           )}
+                        </div>
+
+                        <div>
+                           <Label
+                              htmlFor="cardNumber"
+                              className="text-foreground"
+                           >
+                              Số thẻ <span className="text-red-500">*</span>
+                           </Label>
+                           <Input
+                              id="cardNumber"
+                              placeholder="**** **** **** ****"
+                              className={`${
+                                 errors.cardNumber
+                                    ? "border-red-500"
+                                    : "border-border"
+                              }`}
+                              value={formData.cardNumber}
+                              onChange={(e) =>
+                                 handleInputChange("cardNumber", e.target.value)
+                              }
+                              maxLength={19}
+                           />
+                           {errors.cardNumber && (
+                              <p className="text-red-500 text-sm mt-1">
+                                 {errors.cardNumber}
+                              </p>
+                           )}
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-4">

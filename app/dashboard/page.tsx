@@ -45,6 +45,24 @@ export default function DashboardPage() {
    const [scheduleData, setScheduleData] = useState<any[]>([]);
    const [packages, setPackages] = useState<any[]>([]);
 
+   // Hàm chuẩn hóa định dạng ngày
+   const normalizeDate = (dateStr: string): string => {
+      if (!dateStr) return "";
+      // Handle format "DD/MM/YYYY"
+      if (dateStr.includes("/")) {
+         const [day, month, year] = dateStr.split("/").map(Number);
+         const formatted = `${year}-${month.toString().padStart(2, "0")}-${day
+            .toString()
+            .padStart(2, "0")}`;
+         return isNaN(new Date(formatted).getTime()) ? "" : formatted;
+      }
+      // Handle format "YYYY-MM-DD"
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+         return isNaN(new Date(dateStr).getTime()) ? "" : dateStr;
+      }
+      return "";
+   };
+
    // ✅ Check auth + load profile
    useEffect(() => {
       const token = document.cookie.includes("access_token=");
@@ -53,7 +71,6 @@ export default function DashboardPage() {
          return;
       }
       setIsAuthenticated(true);
-
       (async () => {
          try {
             const data = await getProfile();
@@ -62,7 +79,9 @@ export default function DashboardPage() {
                email: data.email || "",
                phone: data.phone || "",
                level: data.level || "beginner",
-               avatar: data.avatar || "https://i.pinimg.com/1200x/33/0d/65/330d65ae9227237d78b906446b08945c.jpg",
+               avatar:
+                  data.avatar ||
+                  "https://i.pinimg.com/1200x/33/0d/65/330d65ae9227237d78b906446b08945c.jpg",
                id: data._id,
             });
          } catch (err) {
@@ -70,6 +89,47 @@ export default function DashboardPage() {
          }
       })();
    }, [router]);
+
+   useEffect(() => {
+      const savedBookings = JSON.parse(
+         sessionStorage.getItem("userBookings") || "[]"
+      );
+      console.log("[v3] Loaded bookings from sessionStorage:", savedBookings);
+
+      const schedules = savedBookings.filter(
+         (booking: any) => booking.type === "trial" || booking.date
+      );
+      console.log("[v3] Filtered schedules:", schedules); // Kiểm tra schedules
+
+      const packageBookings = savedBookings.filter(
+         (booking: any) =>
+            booking.type === "payment" &&
+            (booking.packageName || booking.course)
+      );
+
+      setScheduleData(schedules);
+      setPackages(
+         packageBookings.map((booking: any) => ({
+            id: booking.id,
+            name: booking.course?.name || booking.packageName,
+            teacherName: booking.teacherName,
+            status: "active",
+            progress: (0 / (booking.course?.sessions || 10)) * 100,
+            totalSessions: booking.course?.sessions || 10,
+            usedSessions: 0,
+            features: booking.course?.features || [],
+            originalPrice: booking.course?.originalPrice || null,
+            popular: booking.course?.popular || false,
+         }))
+      );
+
+      console.log(
+         "[v3] Today bookings:",
+         schedules.filter(
+            (booking: any) => normalizeDate(booking.date) === today
+         )
+      ); // Kiểm tra todayBookings
+   }, []);
 
    const validateProfile = () => {
       const newErrors: Record<string, string> = {};
@@ -128,6 +188,22 @@ export default function DashboardPage() {
       }
    };
 
+   // Filter bookings for today's date
+   const today = new Date()
+      .toLocaleDateString("en-CA", {
+         timeZone: "Asia/Ho_Chi_Minh",
+         year: "numeric",
+         month: "2-digit",
+         day: "2-digit",
+      })
+      .split("/")
+      .reverse()
+      .join("-");
+   console.log("[v3] Today:", today);
+   const todayBookings = scheduleData.filter(
+      (booking: any) => normalizeDate(booking.date) === today
+   );
+
    if (!isAuthenticated) {
       return (
          <div className="min-h-screen flex items-center justify-center">
@@ -180,12 +256,51 @@ export default function DashboardPage() {
                            </CardHeader>
                            <CardContent>
                               {scheduleData.length > 0 ? (
-                                 <Calendar
-                                    mode="single"
-                                    selected={selectedDate}
-                                    onSelect={setSelectedDate}
-                                    className="rounded-md border border-border"
-                                 />
+                                 <div className="space-y-4">
+                                    <Calendar
+                                       mode="single"
+                                       selected={selectedDate}
+                                       onSelect={setSelectedDate}
+                                       className="rounded-md border border-border"
+                                    />
+                                    <div className="mt-4 space-y-2">
+                                       <h4 className="font-medium text-foreground">
+                                          Lịch đã đặt:
+                                       </h4>
+                                       {scheduleData.map((booking: any) => (
+                                          <div
+                                             key={booking.id}
+                                             className="p-3 bg-accent/10 rounded-lg"
+                                          >
+                                             <div className="flex justify-between items-start">
+                                                <div>
+                                                   <p className="font-medium text-foreground">
+                                                      {booking.teacherName}
+                                                   </p>
+                                                   <p className="text-sm text-muted-foreground">
+                                                      {booking.date} -{" "}
+                                                      {booking.time}
+                                                   </p>
+                                                   <p className="text-xs text-muted-foreground">
+                                                      {booking.type === "trial"
+                                                         ? "Học thử miễn phí"
+                                                         : "Buổi học chính thức"}
+                                                   </p>
+                                                </div>
+                                                <Badge
+                                                   variant={
+                                                      booking.type === "trial"
+                                                         ? "secondary"
+                                                         : "default"
+                                                   }
+                                                >
+                                                   {booking.status}
+                                                </Badge>
+                                             </div>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
                               ) : (
                                  <div className="text-center py-6 text-muted-foreground">
                                     Bạn chưa có lịch học nào 📅
@@ -203,35 +318,49 @@ export default function DashboardPage() {
                               </CardTitle>
                            </CardHeader>
                            <CardContent>
-                              {scheduleData.length > 0 ? (
+                              {todayBookings.length > 0 ? (
                                  <div className="space-y-4">
-                                    <div className="p-4 bg-accent/10 rounded-lg">
-                                       <div className="flex items-center space-x-3 mb-2">
-                                          <Avatar className="w-10 h-10">
-                                             <AvatarImage src="/teacher-portrait.png" />
-                                             <AvatarFallback>SJ</AvatarFallback>
-                                          </Avatar>
-                                          <div>
-                                             <p className="font-medium text-foreground">
-                                                Sarah Johnson
-                                             </p>
-                                             <p className="text-sm text-muted-foreground">
-                                                IELTS Speaking
-                                             </p>
-                                          </div>
-                                       </div>
-                                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                                          <Clock className="w-4 h-4" />
-                                          <span>2:00 PM - 3:00 PM</span>
-                                       </div>
-                                       <Button
-                                          size="sm"
-                                          className="w-full mt-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                                    {todayBookings.map((booking: any) => (
+                                       <div
+                                          key={booking.id}
+                                          className="p-4 bg-accent/10 rounded-lg"
                                        >
-                                          <Play className="w-4 h-4 mr-2" />
-                                          Tham gia lớp học
-                                       </Button>
-                                    </div>
+                                          <div className="flex items-center space-x-3 mb-2">
+                                             <Avatar className="w-10 h-10">
+                                                <AvatarImage
+                                                   src="/teacher-portrait.png"
+                                                   alt={booking.teacherName}
+                                                />
+                                                <AvatarFallback>
+                                                   {booking.teacherName
+                                                      ?.charAt(0)
+                                                      .toUpperCase()}
+                                                </AvatarFallback>
+                                             </Avatar>
+                                             <div>
+                                                <p className="font-medium text-foreground">
+                                                   {booking.teacherName}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                   {booking.type === "trial"
+                                                      ? "Học thử miễn phí"
+                                                      : "Buổi học chính thức"}
+                                                </p>
+                                             </div>
+                                          </div>
+                                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                                             <Clock className="w-4 h-4" />
+                                             <span>{booking.time}</span>
+                                          </div>
+                                          <Button
+                                             size="sm"
+                                             className="w-full mt-3 bg-primary text-primary-foreground hover:bg-primary/90"
+                                          >
+                                             <Play className="w-4 h-4 mr-2" />
+                                             Tham gia lớp học
+                                          </Button>
+                                       </div>
+                                    ))}
                                  </div>
                               ) : (
                                  <div className="text-center py-6 text-muted-foreground">
@@ -255,38 +384,66 @@ export default function DashboardPage() {
                      <CardContent>
                         {packages.length > 0 ? (
                            <div className="space-y-4">
-                              <div className="p-4 border border-border rounded-lg">
-                                 <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                       <h3 className="font-semibold text-foreground">
-                                          Gói Phổ Biến
-                                       </h3>
-                                       <p className="text-sm text-muted-foreground">
-                                          10 buổi học 1-1
-                                       </p>
+                              {packages.map((pkg: any) => (
+                                 <div
+                                    key={pkg.id}
+                                    className="p-4 border border-border rounded-lg"
+                                 >
+                                    <div className="flex justify-between items-start mb-3">
+                                       <div>
+                                          <h3 className="font-semibold text-foreground">
+                                             {pkg.name}
+                                          </h3>
+                                          <p className="text-sm text-muted-foreground">
+                                             Giáo viên: {pkg.teacherName}
+                                          </p>
+                                       </div>
+                                       <Badge
+                                          variant="secondary"
+                                          className="bg-green-100 text-green-800"
+                                       >
+                                          {pkg.status === "active"
+                                             ? "Đang hoạt động"
+                                             : pkg.status}
+                                       </Badge>
                                     </div>
-                                    <Badge
-                                       variant="secondary"
-                                       className="bg-green-100 text-green-800"
-                                    >
-                                       Đang hoạt động
-                                    </Badge>
-                                 </div>
-                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                       <span className="text-muted-foreground">
-                                          Đã sử dụng
-                                       </span>
-                                       <span className="text-foreground">
-                                          3/10 buổi
-                                       </span>
+                                    <div className="space-y-2">
+                                       <div className="flex justify-between text-sm">
+                                          <span className="text-muted-foreground">
+                                             Đã sử dụng
+                                          </span>
+                                          <span className="text-foreground">
+                                             {pkg.usedSessions}/
+                                             {pkg.totalSessions} buổi
+                                          </span>
+                                       </div>
+                                       <Progress
+                                          value={pkg.progress}
+                                          className="h-2"
+                                       />
                                     </div>
-                                    <Progress value={30} className="h-2" />
+                                    {pkg.features &&
+                                       pkg.features.length > 0 && (
+                                          <div className="mt-3">
+                                             <p className="font-medium text-foreground text-sm mb-1">
+                                                Thông tin gói:
+                                             </p>
+                                             <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                                                {pkg.features.map(
+                                                   (
+                                                      feature: string,
+                                                      index: number
+                                                   ) => (
+                                                      <li key={index}>
+                                                         {feature}
+                                                      </li>
+                                                   )
+                                                )}
+                                             </ul>
+                                          </div>
+                                       )}
                                  </div>
-                                 <div className="mt-3 text-sm text-muted-foreground">
-                                    Hết hạn: 30/06/2024
-                                 </div>
-                              </div>
+                              ))}
                            </div>
                         ) : (
                            <div className="text-center py-6 text-muted-foreground">
@@ -310,7 +467,12 @@ export default function DashboardPage() {
                         <div className="space-y-6">
                            <div className="flex items-center space-x-4">
                               <Avatar className="w-20 h-20">
-                                 <AvatarImage src={profileData.avatar} className="object-cover"/>
+                                 <AvatarImage
+                                    src={
+                                       profileData.avatar || "/placeholder.svg"
+                                    }
+                                    className="object-cover"
+                                 />
                                  <AvatarFallback>NV</AvatarFallback>
                               </Avatar>
                               <Button

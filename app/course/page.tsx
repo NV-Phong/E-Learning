@@ -81,7 +81,11 @@ export default function PackagesPage() {
                            variant={pkg.popular ? "default" : "outline"}
                            asChild
                         >
-                           <Link href={`/payment?package=${pkg.id}`}>
+                           <Link
+                              href={`/payment?package=${
+                                 pkg.id
+                              }&packageName=${encodeURIComponent(pkg.name)}`}
+                           >
                               Mua gói học
                            </Link>
                         </Button>

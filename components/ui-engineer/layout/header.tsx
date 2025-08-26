@@ -51,14 +51,6 @@ export function Header() {
                </Button>
                <Button variant="ghost" asChild>
                   <Link
-                     href="/booking"
-                     className="text-foreground hover:text-primary"
-                  >
-                     Đặt lịch học thử
-                  </Link>
-               </Button>
-               <Button variant="ghost" asChild>
-                  <Link
                      href="/course"
                      className="text-foreground hover:text-primary"
                   >
