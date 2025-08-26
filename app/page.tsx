@@ -1,10 +1,27 @@
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Clock, DollarSign } from "lucide-react";
 import GradualSpacing from "@/components/magicui/gradual-spacing";
+import { useAPI } from "@/hooks/use-api";
+import { useEffect } from "react";
 
 export default function HomePage() {
+   const { data, loading, error } = useAPI("/");
+
+   useEffect(() => {
+      if (loading) {
+         console.log("Waiting for the server to wake up...");
+      }
+      if (error) {
+         console.error("Something went wrong while fetching data:", error);
+      }
+      if (data) {
+         console.log("The server is awake!", data);
+      }
+   }, [data, loading, error]);
+
    return (
       <div className="min-h-screen">
          {/* Hero Section */}
@@ -29,10 +46,10 @@ export default function HomePage() {
                   hành trình học tiếng Anh của bạn với E-Learning ngay hôm nay!
                </p>
             </div>
-         {/* </section> */}
+            {/* </section> */}
 
-         {/* Benefits Section */}
-         {/* <section className="py-20"> */}
+            {/* Benefits Section */}
+            {/* <section className="py-20"> */}
             <div className="container mx-auto px-4 mt-30">
                <h2 className="text-3xl font-bold text-center text-foreground mb-12">
                   Tại sao chọn E-Learning?
