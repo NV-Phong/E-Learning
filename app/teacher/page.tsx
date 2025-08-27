@@ -48,19 +48,13 @@ export default function TeachersPage() {
       rating: "",
    });
 
-   const { getTeachers, loading } = useTeacher();
+   // Lấy cả 'loading' và 'error' từ hook
+   const { getTeachers, loading, error } = useTeacher();
    const [teachers, setTeachers] = useState<Teacher[]>([]);
-   const [error, setError] = useState<string>("");
 
-   // Memoize the fetch function to fix useEffect dependency
    const fetchTeachers = useCallback(async () => {
-      try {
-         const data = await getTeachers();
-         setTeachers(Array.isArray(data) ? data : []);
-      } catch (error) {
-         console.error("Error fetching teachers:", error);
-         setError("Không tải được danh sách giáo viên");
-      }
+      const data = await getTeachers();
+      setTeachers(data);
    }, [getTeachers]);
 
    useEffect(() => {
@@ -304,7 +298,7 @@ export default function TeachersPage() {
                   {filteredTeachers.map((teacher: Teacher) => {
                      const id = teacher._id || teacher.id;
                      const name = teacher.name || "Teacher";
-                     const avatar = teacher.avatar || "/placeholder.jpg";
+                     const avatar = teacher.avatar || "";
                      const experience = `${
                         teacher.experienceYears || 0
                      } năm kinh nghiệm`;
