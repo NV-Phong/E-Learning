@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,46 @@ import { Clock, Play, Shield, CheckCircle } from "lucide-react";
 import { useUser } from "@/hooks/user-hooks";
 import { toast } from "sonner";
 
+// Define interfaces for type safety
+interface Booking {
+   id: string;
+   type: string;
+   date: string;
+   time: string;
+   teacherName: string;
+   status: string;
+   packageName?: string;
+   course?: {
+      name: string;
+      sessions: number;
+      features: string[];
+      originalPrice?: number;
+      popular?: boolean;
+   };
+}
+
+interface Package {
+   id: string;
+   name: string;
+   teacherName: string;
+   status: string;
+   progress: number;
+   totalSessions: number;
+   usedSessions: number;
+   features: string[];
+   originalPrice?: number;
+   popular?: boolean;
+}
+
+interface ProfileData {
+   fullname: string;
+   email: string;
+   phone: string;
+   level: string;
+   avatar: string;
+   id: string;
+}
+
 export default function DashboardPage() {
    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
       new Date()
@@ -31,7 +71,7 @@ export default function DashboardPage() {
 
    const { getProfile, updateUser, loading } = useUser();
 
-   const [profileData, setProfileData] = useState({
+   const [profileData, setProfileData] = useState<ProfileData>({
       fullname: "",
       email: "",
       phone: "",
@@ -41,11 +81,11 @@ export default function DashboardPage() {
    });
    const [errors, setErrors] = useState<Record<string, string>>({});
 
-   // giả lập dữ liệu lịch học & gói học (sau này bạn thay API vào)
-   const [scheduleData, setScheduleData] = useState<any[]>([]);
-   const [packages, setPackages] = useState<any[]>([]);
+   // Typed state for schedule and packages data
+   const [scheduleData, setScheduleData] = useState<Booking[]>([]);
+   const [packages, setPackages] = useState<Package[]>([]);
 
-   // Hàm chuẩn hóa định dạng ngày
+   // Normalize date function
    const normalizeDate = (dateStr: string): string => {
       if (!dateStr) return "";
       // Handle format "DD/MM/YYYY"
@@ -63,7 +103,26 @@ export default function DashboardPage() {
       return "";
    };
 
-   // ✅ Check auth + load profile
+   // Memoize the loadProfile function
+   const loadProfile = useCallback(async () => {
+      try {
+         const data = await getProfile();
+         setProfileData({
+            fullname: data.displayName || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            level: data.level || "beginner",
+            avatar:
+               data.avatar ||
+               "https://i.pinimg.com/1200x/33/0d/65/330d65ae9227237d78b906446b08945c.jpg",
+            id: data._id,
+         });
+      } catch (err) {
+         console.error(err);
+      }
+   }, [getProfile]);
+
+   // Check auth + load profile
    useEffect(() => {
       const token = document.cookie.includes("access_token=");
       if (!token) {
@@ -71,65 +130,63 @@ export default function DashboardPage() {
          return;
       }
       setIsAuthenticated(true);
-      (async () => {
-         try {
-            const data = await getProfile();
-            setProfileData({
-               fullname: data.displayName || "",
-               email: data.email || "",
-               phone: data.phone || "",
-               level: data.level || "beginner",
-               avatar:
-                  data.avatar ||
-                  "https://i.pinimg.com/1200x/33/0d/65/330d65ae9227237d78b906446b08945c.jpg",
-               id: data._id,
-            });
-         } catch (err) {
-            console.error(err);
-         }
-      })();
-   }, [router]);
+      loadProfile();
+   }, [router, loadProfile]);
+
+   // Get today's date
+   const today = new Date()
+      .toLocaleDateString("en-CA", {
+         timeZone: "Asia/Ho_Chi_Minh",
+         year: "numeric",
+         month: "2-digit",
+         day: "2-digit",
+      })
+      .split("/")
+      .reverse()
+      .join("-");
 
    useEffect(() => {
       const savedBookings = JSON.parse(
          sessionStorage.getItem("userBookings") || "[]"
-      );
+      ) as Booking[];
       console.log("[v3] Loaded bookings from sessionStorage:", savedBookings);
 
       const schedules = savedBookings.filter(
-         (booking: any) => booking.type === "trial" || booking.date
+         (booking: Booking) => booking.type === "trial" || booking.date
       );
-      console.log("[v3] Filtered schedules:", schedules); // Kiểm tra schedules
+      console.log("[v3] Filtered schedules:", schedules);
 
       const packageBookings = savedBookings.filter(
-         (booking: any) =>
+         (booking: Booking) =>
             booking.type === "payment" &&
             (booking.packageName || booking.course)
       );
 
       setScheduleData(schedules);
       setPackages(
-         packageBookings.map((booking: any) => ({
-            id: booking.id,
-            name: booking.course?.name || booking.packageName,
-            teacherName: booking.teacherName,
-            status: "active",
-            progress: (0 / (booking.course?.sessions || 10)) * 100,
-            totalSessions: booking.course?.sessions || 10,
-            usedSessions: 0,
-            features: booking.course?.features || [],
-            originalPrice: booking.course?.originalPrice || null,
-            popular: booking.course?.popular || false,
-         }))
+         packageBookings.map(
+            (booking: Booking): Package => ({
+               id: booking.id,
+               name: booking.course?.name || booking.packageName || "",
+               teacherName: booking.teacherName,
+               status: "active",
+               progress: (0 / (booking.course?.sessions || 10)) * 100,
+               totalSessions: booking.course?.sessions || 10,
+               usedSessions: 0,
+               features: booking.course?.features || [],
+               originalPrice: booking.course?.originalPrice || undefined,
+               popular: booking.course?.popular || false,
+            })
+         )
       );
 
       console.log(
          "[v3] Today bookings:",
          schedules.filter(
-            (booking: any) => normalizeDate(booking.date) === today
+            (booking: Booking) => normalizeDate(booking.date) === today
          )
-      ); // Kiểm tra todayBookings
-   }, []);
+      );
+   }, [today]);
 
    const validateProfile = () => {
       const newErrors: Record<string, string> = {};
@@ -183,25 +240,16 @@ export default function DashboardPage() {
          });
 
          toast.success("Cập nhật thông tin thành công 🎉");
-      } catch (err: any) {
-         toast.error(err.response?.data?.message || "Cập nhật thất bại");
+      } catch (err: unknown) {
+         const error = err as { response?: { data?: { message?: string } } };
+         toast.error(error.response?.data?.message || "Cập nhật thất bại");
       }
    };
 
    // Filter bookings for today's date
-   const today = new Date()
-      .toLocaleDateString("en-CA", {
-         timeZone: "Asia/Ho_Chi_Minh",
-         year: "numeric",
-         month: "2-digit",
-         day: "2-digit",
-      })
-      .split("/")
-      .reverse()
-      .join("-");
    console.log("[v3] Today:", today);
    const todayBookings = scheduleData.filter(
-      (booking: any) => normalizeDate(booking.date) === today
+      (booking: Booking) => normalizeDate(booking.date) === today
    );
 
    if (!isAuthenticated) {
@@ -267,7 +315,7 @@ export default function DashboardPage() {
                                        <h4 className="font-medium text-foreground">
                                           Lịch đã đặt:
                                        </h4>
-                                       {scheduleData.map((booking: any) => (
+                                       {scheduleData.map((booking: Booking) => (
                                           <div
                                              key={booking.id}
                                              className="p-3 bg-accent/10 rounded-lg"
@@ -320,7 +368,7 @@ export default function DashboardPage() {
                            <CardContent>
                               {todayBookings.length > 0 ? (
                                  <div className="space-y-4">
-                                    {todayBookings.map((booking: any) => (
+                                    {todayBookings.map((booking: Booking) => (
                                        <div
                                           key={booking.id}
                                           className="p-4 bg-accent/10 rounded-lg"
@@ -384,7 +432,7 @@ export default function DashboardPage() {
                      <CardContent>
                         {packages.length > 0 ? (
                            <div className="space-y-4">
-                              {packages.map((pkg: any) => (
+                              {packages.map((pkg: Package) => (
                                  <div
                                     key={pkg.id}
                                     className="p-4 border border-border rounded-lg"

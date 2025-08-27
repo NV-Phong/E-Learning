@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,28 +17,55 @@ import {
 import { Search, Star, X } from "lucide-react";
 import { useTeacher } from "@/hooks/teacher-hooks";
 
+// Define Teacher interface
+interface Teacher {
+   _id?: string;
+   id?: string;
+   name: string;
+   bio?: string;
+   avatar?: string;
+   experienceYears?: number;
+   hourlyRate?: number;
+   certifications?: string[];
+   rating?: {
+      average: number;
+      count: number;
+   };
+}
+
+// Define filter state interface
+interface FilterState {
+   specialty: string;
+   priceRange: string;
+   rating: string;
+}
+
 export default function TeachersPage() {
    const [searchQuery, setSearchQuery] = useState("");
-   const [selectedFilters, setSelectedFilters] = useState({
+   const [selectedFilters, setSelectedFilters] = useState<FilterState>({
       specialty: "",
       priceRange: "",
       rating: "",
    });
 
    const { getTeachers, loading } = useTeacher();
-   const [teachers, setTeachers] = useState<any[]>([]);
+   const [teachers, setTeachers] = useState<Teacher[]>([]);
    const [error, setError] = useState<string>("");
 
+   // Memoize the fetch function to fix useEffect dependency
+   const fetchTeachers = useCallback(async () => {
+      try {
+         const data = await getTeachers();
+         setTeachers(Array.isArray(data) ? data : []);
+      } catch (error) {
+         console.error("Error fetching teachers:", error);
+         setError("Không tải được danh sách giáo viên");
+      }
+   }, [getTeachers]);
+
    useEffect(() => {
-      (async () => {
-         try {
-            const data = await getTeachers();
-            setTeachers(Array.isArray(data) ? data : []);
-         } catch (e: any) {
-            setError("Không tải được danh sách giáo viên");
-         }
-      })();
-   }, []);
+      fetchTeachers();
+   }, [fetchTeachers]);
 
    const handleSearch = (value: string) => {
       setSearchQuery(value);
@@ -274,7 +301,7 @@ export default function TeachersPage() {
                </Card>
             ) : (
                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTeachers.map((teacher: any) => {
+                  {filteredTeachers.map((teacher: Teacher) => {
                      const id = teacher._id || teacher.id;
                      const name = teacher.name || "Teacher";
                      const avatar = teacher.avatar || "/placeholder.svg";

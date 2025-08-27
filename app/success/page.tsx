@@ -8,6 +8,30 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { learningPackages } from "@/lib/data";
 
+// Define interfaces for type safety
+interface BookingData {
+   id: string;
+   type: string | null;
+   teacherName: string | null;
+   teacherId: string | null;
+   date: string | null;
+   time: string | null;
+   packageName: string | null;
+   packageId: string | null;
+   status: string;
+   createdAt: string;
+   level?: string | null;
+   course?: {
+      id: string;
+      name: string;
+      price: number;
+      sessions: number;
+      originalPrice?: number | null;
+      features: string[];
+      popular: boolean;
+   };
+}
+
 export default function SuccessContent() {
    const searchParams = useSearchParams();
    const type = searchParams.get("type");
@@ -51,7 +75,7 @@ export default function SuccessContent() {
             }
          }
 
-         const bookingData = {
+         const bookingData: BookingData = {
             id: Date.now().toString(),
             type,
             teacherName,
@@ -76,12 +100,12 @@ export default function SuccessContent() {
             ...(level && { level }),
          };
 
-         const existingBookings = JSON.parse(
+         const existingBookings: BookingData[] = JSON.parse(
             sessionStorage.getItem("userBookings") || "[]"
          );
 
          const isDuplicate = existingBookings.some(
-            (booking: any) =>
+            (booking: BookingData) =>
                booking.type === bookingData.type &&
                booking.teacherId === bookingData.teacherId &&
                booking.date === bookingData.date &&
@@ -112,7 +136,7 @@ export default function SuccessContent() {
       level,
    ]);
 
-   const latestBooking = JSON.parse(
+   const latestBooking: BookingData | undefined = JSON.parse(
       sessionStorage.getItem("userBookings") || "[]"
    ).slice(-1)[0];
 

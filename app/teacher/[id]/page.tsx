@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
+import { useState, use, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,25 +54,26 @@ export default function TeacherDetailPage({ params }: TeacherDetailPageProps) {
    const { getTeacher, loading } = useTeacher();
    const { id } = use(params);
 
+   // Memoize the fetch function to fix the useEffect dependency warning
+   const fetchTeacher = useCallback(async () => {
+      try {
+         console.log("[v0] Starting to fetch teacher data");
+         setError(null);
+         const teacherData = await getTeacher(id);
+         console.log("[v0] Teacher data received:", teacherData);
+         setTeacher(teacherData);
+      } catch (err) {
+         console.log("[v0] Error fetching teacher:", err);
+         setError("Không thể tải thông tin giáo viên");
+      }
+   }, [id, getTeacher]);
+
    useEffect(() => {
       console.log("[v0] useEffect triggered with id:", id);
-      const fetchTeacher = async () => {
-         try {
-            console.log("[v0] Starting to fetch teacher data");
-            setError(null);
-            const teacherData = await getTeacher(id);
-            console.log("[v0] Teacher data received:", teacherData);
-            setTeacher(teacherData);
-         } catch (err) {
-            console.log("[v0] Error fetching teacher:", err);
-            setError("Không thể tải thông tin giáo viên");
-         }
-      };
-
       if (id) {
          fetchTeacher();
       }
-   }, [id]); // Removed getTeacher from dependencies to prevent infinite loop
+   }, [id, fetchTeacher]);
 
    if (loading) {
       return (

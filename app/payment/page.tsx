@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,22 +15,19 @@ import { useTeacher } from "@/hooks/teacher-hooks";
 import { learningPackages } from "@/lib/data";
 import Link from "next/link";
 
-interface Package {
-   id: string;
+// Define a proper Teacher interface
+interface Teacher {
+   _id: string;
    name: string;
-   price: number;
-   sessions: number;
-   originalPrice?: number;
-   features: string[];
-   popular?: boolean;
-   description?: string;
+   hourlyRate: number;
+   // Add other teacher properties as needed
 }
 
 export default function PaymentForm() {
    const searchParams = useSearchParams();
    const router = useRouter();
    const packageId = searchParams.get("package");
-   const packageName = searchParams.get("packageName");
+   // Removed unused packageName variable
    const teacherId = searchParams.get("teacher");
    const bookingType = searchParams.get("type");
    const bookingDate = searchParams.get("date");
@@ -42,21 +39,23 @@ export default function PaymentForm() {
 
    const [paymentMethod, setPaymentMethod] = useState("card");
    const { getTeacher, loading } = useTeacher();
-   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+
+   // Memoize the getTeacher function to fix the useEffect dependency warning
+   const fetchTeacher = useCallback(async () => {
+      if (teacherId) {
+         try {
+            const teacher = await getTeacher(teacherId);
+            setSelectedTeacher(teacher);
+         } catch (error) {
+            console.error("[v0] Error fetching teacher:", error);
+         }
+      }
+   }, [teacherId, getTeacher]);
 
    useEffect(() => {
-      const fetchTeacher = async () => {
-         if (teacherId) {
-            try {
-               const teacher = await getTeacher(teacherId);
-               setSelectedTeacher(teacher);
-            } catch (error) {
-               console.error("[v0] Error fetching teacher:", error);
-            }
-         }
-      };
       fetchTeacher();
-   }, [teacherId]);
+   }, [fetchTeacher]);
 
    const [formData, setFormData] = useState({
       cardName: "",
