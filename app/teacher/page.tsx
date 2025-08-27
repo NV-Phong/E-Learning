@@ -304,7 +304,7 @@ export default function TeachersPage() {
                   {filteredTeachers.map((teacher: Teacher) => {
                      const id = teacher._id || teacher.id;
                      const name = teacher.name || "Teacher";
-                     const avatar = teacher.avatar || "/placeholder.svg";
+                     const avatar = teacher.avatar || "/placeholder.jpg";
                      const experience = `${
                         teacher.experienceYears || 0
                      } năm kinh nghiệm`;
